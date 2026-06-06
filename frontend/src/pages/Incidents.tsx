@@ -1,14 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Send, Loader2, BrainCircuit, Activity, ShieldAlert, HeartPulse, LocateFixed, Clock, CheckCircle2 } from 'lucide-react';
 import { activeIncidents } from '../data/incidents';
-import { analyzeIncident } from '../services/api';
+import { analyzeIncident, getIncidents } from '../services/api';
 
 const Incidents = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [isDispatched, setIsDispatched] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
   const [analysisData, setAnalysisData] = useState<any>(null);
+  const [liveIncidents, setLiveIncidents] = useState<any[]>([]);
+  const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchIncidentsData = async () => {
+      const data = await getIncidents();
+      if (data && Array.isArray(data) && data.length > 0) {
+        setLiveIncidents(data);
+      } else {
+        setLiveIncidents(activeIncidents);
+      }
+    };
+    fetchIncidentsData();
+  }, []);
 
   const handleAnalyze = async () => {
     setIsAnalyzing(true);
@@ -16,11 +31,11 @@ const Incidents = () => {
     setIsDispatched(false);
     
     const ta = document.getElementById('incident-textarea') as HTMLTextAreaElement;
-    const report = ta ? ta.value : "Elderly person collapsed near Gate 7. Crowd gathering.";
+    const report = ta?.value?.trim() ? ta.value.trim() : "Elderly person collapsed near Gate 7. Crowd gathering.";
     
     const data = await analyzeIncident(report);
     
-    setAnalysisData(data || {
+    const newAnalysis = data || {
       category: "Medical Emergency",
       location: "Gate 7",
       severity: "High",
@@ -28,19 +43,56 @@ const Incidents = () => {
       recommended_resources: ["Ambulance A2", "Medical Team Bravo", "Security Unit S1"],
       recommended_action: "Clear the crowd, dispatch medical team, and secure the area.",
       estimated_response_time: "4 minutes"
-    });
+    };
 
+    setAnalysisData(newAnalysis);
+
+    const newIncident = {
+      id: "INC-NEW",
+      title: report.split('.')[0] || "New Incident",
+      severity: newAnalysis.severity || "HIGH",
+      status: "ACTIVE",
+      location: newAnalysis.location || "Unknown",
+      category: newAnalysis.category || "General",
+      created_at: new Date().toISOString()
+    };
+    
+    setLiveIncidents(prev => [newIncident, ...prev]);
+
+    setSelectedIncidentId("INC-NEW");
     setIsAnalyzing(false);
     setShowAnalysis(true);
   };
 
   const handleDispatch = () => {
     setIsDispatched(true);
+    setToastMessage("Recommended resources dispatched.");
     setShowToast(true);
     
     setTimeout(() => {
       setShowToast(false);
     }, 4000);
+  };
+
+  const handleReassign = () => {
+    setIsDispatched(true);
+    setToastMessage("Resource reassigned to incident.");
+    setShowToast(true);
+    
+    setTimeout(() => {
+      setShowToast(false);
+    }, 4000);
+  };
+
+  const getStatusStyle = (status: string, isSelected: boolean, isDispatched: boolean) => {
+    if (isSelected && isDispatched) return 'bg-safe/20 text-safe border border-safe/30';
+    switch (status.toUpperCase()) {
+      case 'ACTIVE': return 'bg-warning/20 text-warning border border-warning/30';
+      case 'ESCALATED': return 'bg-critical/20 text-critical border border-critical/30';
+      case 'MONITORING': return 'bg-[#19B5D8]/20 text-[#19B5D8] border border-[#19B5D8]/30';
+      case 'RESOLVED': return 'bg-safe/20 text-safe border border-safe/30';
+      default: return 'border border-gray-600 text-gray-400';
+    }
   };
 
   return (
@@ -50,7 +102,7 @@ const Incidents = () => {
         <div className="fixed top-8 right-8 z-50 transition-all duration-300">
           <div className="bg-safe/90 border border-safe text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 backdrop-blur-md">
             <CheckCircle2 size={20} />
-            <span className="text-sm font-medium">Resources dispatched to Gate 7 successfully.</span>
+            <span className="text-sm font-medium">{toastMessage}</span>
           </div>
         </div>
       )}
@@ -112,19 +164,19 @@ const Incidents = () => {
         <div className="glass-card p-4">
           <div className="grid grid-cols-4 gap-4">
             <div className="bg-card/50 border border-cardBorder rounded-lg p-3 text-center">
-              <div className="text-xl font-bold text-white mb-1">47</div>
+              <div className="text-xl font-bold text-white mb-1">{liveIncidents.length || 47}</div>
               <div className="text-[10px] text-gray-400 uppercase tracking-widest">Total Today</div>
             </div>
             <div className="bg-card/50 border border-cardBorder rounded-lg p-3 text-center">
-              <div className="text-xl font-bold text-primary mb-1">23</div>
+              <div className="text-xl font-bold text-primary mb-1">{liveIncidents.filter(i => i.status?.toUpperCase() === 'ACTIVE').length || 23}</div>
               <div className="text-[10px] text-gray-400 uppercase tracking-widest">Active</div>
             </div>
             <div className="bg-card/50 border border-cardBorder rounded-lg p-3 text-center">
-              <div className="text-xl font-bold text-critical mb-1">4</div>
+              <div className="text-xl font-bold text-critical mb-1">{liveIncidents.filter(i => (i.severity || i.priority)?.toUpperCase() === 'CRITICAL').length || 4}</div>
               <div className="text-[10px] text-gray-400 uppercase tracking-widest">Critical</div>
             </div>
             <div className="bg-card/50 border border-cardBorder rounded-lg p-3 text-center">
-              <div className="text-xl font-bold text-safe mb-1">20</div>
+              <div className="text-xl font-bold text-safe mb-1">{liveIncidents.filter(i => i.status?.toUpperCase() === 'RESOLVED').length || 20}</div>
               <div className="text-[10px] text-gray-400 uppercase tracking-widest">Resolved</div>
             </div>
           </div>
@@ -204,7 +256,7 @@ const Incidents = () => {
             </div>
 
             {/* Suggested Actions Row */}
-            <div className="mb-6 flex gap-6">
+            <div className="flex gap-6">
               <div className="flex-1">
                 <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-3">Suggested Actions</p>
                 <div className="space-y-3">
@@ -245,7 +297,10 @@ const Incidents = () => {
                 >
                   {isDispatched ? 'Dispatched' : 'Dispatch Now'}
                 </button>
-                <button className="w-full bg-card border border-cardBorder hover:bg-cardBorder/50 text-gray-300 font-medium py-3 px-6 rounded-lg transition-colors">
+                <button 
+                  onClick={handleReassign}
+                  className="w-full bg-card border border-cardBorder hover:bg-cardBorder/50 text-gray-300 font-medium py-3 px-6 rounded-lg transition-colors"
+                >
                   Reassign
                 </button>
               </div>
@@ -263,18 +318,37 @@ const Incidents = () => {
           <div className="p-4 border-b border-cardBorder flex justify-between items-center">
             <div>
               <h3 className="font-bold text-white">Live Incident Feed</h3>
-              <p className="text-xs text-gray-400">6 active · 7 total today</p>
+              <p className="text-xs text-gray-400">{liveIncidents.filter(i => i.status?.toUpperCase() === 'ACTIVE').length || 6} active · {liveIncidents.length || 7} total today</p>
             </div>
             <button className="text-xs text-primary hover:text-primary/80 transition-colors">View all</button>
           </div>
           
           <div className="p-4 space-y-3">
-            {activeIncidents.slice(0, 5).map((incident) => {
-              const isSelected = showAnalysis && incident.title.includes('Elderly collapse');
+            {liveIncidents.slice(0, 5).map((incident: any) => {
+              const isSelected = showAnalysis && selectedIncidentId === incident.id;
+              
+              const priority = incident.severity || incident.priority || 'LOW';
+              const status = incident.status || 'ACTIVE';
+              const timeStr = incident.created_at ? new Date(incident.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : (incident.timeAgo || 'Just now');
+              const displayId = incident.id || `INC-${Math.floor(Math.random() * 1000) + 2000}`;
               
               return (
                 <div 
-                  key={incident.id} 
+                  key={incident.id || Math.random()} 
+                  onClick={() => {
+                    setSelectedIncidentId(incident.id);
+                    setShowAnalysis(true);
+                    setIsDispatched(false);
+                    setAnalysisData({
+                      category: incident.category || 'General Issue',
+                      location: incident.location || incident.zone || 'Unknown Area',
+                      severity: priority,
+                      priority_score: incident.priority_score || incident.risk_score || 75,
+                      recommended_resources: incident.recommended_resources || ['Security Patrol', 'Field Officer'],
+                      recommended_action: incident.recommended_action || incident.description || 'Dispatch nearest available unit to assess the situation.',
+                      estimated_response_time: incident.estimated_response_time || '5 minutes'
+                    });
+                  }}
                   className={`border rounded-lg p-3 transition-all cursor-pointer ${
                     isSelected 
                       ? 'bg-primary/10 border-primary/50 shadow-[0_0_15px_rgba(14,165,233,0.2)] relative overflow-hidden' 
@@ -286,19 +360,15 @@ const Incidents = () => {
                   )}
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-500 font-mono">{incident.id}</span>
-                      <span className={`badge-${incident.priority.toLowerCase()}`}>{incident.priority}</span>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${
-                        isSelected && isDispatched 
-                          ? 'bg-safe/20 text-safe border border-safe/30' 
-                          : 'border border-gray-600 text-gray-400'
-                      }`}>
-                        {isSelected && isDispatched ? 'Resources Assigned' : incident.status}
+                      <span className="text-xs text-gray-500 font-mono">{displayId}</span>
+                      <span className={`badge-${priority.toLowerCase()}`}>{priority.toUpperCase()}</span>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${getStatusStyle(status, isSelected, isDispatched)}`}>
+                        {isSelected && isDispatched ? 'RESOURCES ASSIGNED' : status.toUpperCase()}
                       </span>
                     </div>
                     <div className="flex items-center gap-1 text-xs text-gray-500">
                       <Clock size={12} />
-                      {incident.timeAgo}
+                      {timeStr}
                     </div>
                   </div>
                   
@@ -308,7 +378,7 @@ const Incidents = () => {
                   
                   <div className="flex items-center gap-1 text-xs text-gray-400">
                     <LocateFixed size={12} />
-                    {incident.location} · {incident.category}
+                    {incident.location || incident.zone} · {incident.category}
                   </div>
                 </div>
               );

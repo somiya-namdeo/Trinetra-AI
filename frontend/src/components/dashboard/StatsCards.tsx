@@ -1,11 +1,21 @@
 import React from 'react';
 import { AlertTriangle, Flame, Truck, Activity } from 'lucide-react';
 
-const StatsCards = () => {
+const StatsCards = ({ data }: { data?: any }) => {
+  const safeData = data || {
+    activeIncidents: '6',
+    criticalZones: '1',
+    availableResources: '8',
+    totalResources: '13',
+    riskScore: '72',
+    insightZone: 'Zone A',
+    insightSeverity: 'elevated'
+  };
+
   const stats = [
     {
       title: 'ACTIVE INCIDENTS',
-      value: '6',
+      value: safeData.activeIncidents,
       subtext: 'vs last hour',
       trend: '+3',
       icon: AlertTriangle,
@@ -14,8 +24,8 @@ const StatsCards = () => {
       trendColor: 'text-critical'
     },
     {
-      title: 'CRITICAL INCIDENTS',
-      value: '1',
+      title: 'CRITICAL ZONES',
+      value: safeData.criticalZones,
       subtext: 'requires immediate action',
       trend: '+1',
       icon: Flame,
@@ -25,8 +35,8 @@ const StatsCards = () => {
     },
     {
       title: 'AVAILABLE RESOURCES',
-      value: '8',
-      subtext: 'of 13 total units',
+      value: safeData.availableResources,
+      subtext: `of ${safeData.totalResources} total units`,
       trend: '-2',
       icon: Truck,
       color: 'text-safe',
@@ -35,8 +45,8 @@ const StatsCards = () => {
     },
     {
       title: 'OVERALL RISK SCORE',
-      value: '72',
-      subtext: 'elevated — monitor Zone A',
+      value: safeData.riskScore,
+      subtext: `${safeData.insightSeverity} — monitor ${safeData.insightZone}`,
       trend: '+8',
       icon: Activity,
       color: 'text-primary',

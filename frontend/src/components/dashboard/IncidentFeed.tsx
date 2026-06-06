@@ -1,8 +1,10 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { activeIncidents } from '../../data/incidents';
 import { MapPin, Clock } from 'lucide-react';
 
 const IncidentFeed = () => {
+  const navigate = useNavigate();
   return (
     <div className="glass-card flex flex-col h-full">
       <div className="p-4 border-b border-cardBorder flex justify-between items-center">
@@ -10,7 +12,7 @@ const IncidentFeed = () => {
           <h3 className="font-bold text-white">Live Incident Feed</h3>
           <p className="text-xs text-gray-400">6 active · 7 total today</p>
         </div>
-        <button className="text-xs text-primary hover:text-primary/80 transition-colors">View all</button>
+        <button onClick={() => navigate('/incidents')} className="text-xs text-primary hover:text-primary/80 transition-colors cursor-pointer">View all</button>
       </div>
       
       <div className="p-4 space-y-3 flex-1">

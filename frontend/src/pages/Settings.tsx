@@ -1,31 +1,104 @@
-import React, { useState } from 'react';
-import { User, Shield, Bell, Activity, Database, Server, Zap, Cpu, Sliders, AlertTriangle, Download, RefreshCw, Lock, Trash2, Smartphone, Mail, AlertCircle, MessageSquare } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Shield, Bell, Activity, Database, Server, Zap, Cpu, Sliders as SlidersIcon, AlertTriangle, Download, RefreshCw, Lock, Trash2, Smartphone, Mail, AlertCircle, MessageSquare, X, CheckCircle2 } from 'lucide-react';
+
+const defaultProfile = { name: 'Cmdr. R. Sharma', role: 'Operations Commander', region: 'North • UP Sector 7', shift: '14:00–22:00 IST' };
+const defaultSliders = { crowd: 85, heat: 38, incident: 72, autoDispatch: 90 };
+const defaultToggles = {
+  crossEvent: true, predictive: true, autoGen: true, historical: true, resource: false, voice: false,
+  crowd: true, behavior: true, sms: true, email: false, whatsapp: true, push: true, escalation: true, recommendations: true,
+};
 
 const Settings = () => {
-  const [toggles, setToggles] = useState<Record<string, boolean>>({
-    crossEvent: true,
-    predictive: true,
-    autoGen: true,
-    historical: true,
-    resource: false,
-    voice: false,
-    crowd: true,
-    behavior: true,
-    sms: true,
-    email: false,
-    whatsapp: true,
-    push: true,
-    escalation: true,
-    recommendations: true,
-  });
+  const [profile, setProfile] = useState(() => JSON.parse(localStorage.getItem('trinetra_profile') || JSON.stringify(defaultProfile)));
+  const [sliders, setSliders] = useState(() => JSON.parse(localStorage.getItem('trinetra_sliders') || JSON.stringify(defaultSliders)));
+  const [toggles, setToggles] = useState<Record<string, boolean>>(() => JSON.parse(localStorage.getItem('trinetra_toggles') || JSON.stringify(defaultToggles)));
+  
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [toastMessage, setToastMessage] = useState<{ show: boolean, msg: string, isError?: boolean }>({ show: false, msg: '' });
+
+  const [activeModal, setActiveModal] = useState<string | null>(null);
+  
+  // Temp state for profile edit
+  const [editProfile, setEditProfile] = useState(profile);
+  
+  // Temp state for password
+  const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' });
+
+  // Temp state for danger action
+  const [dangerAction, setDangerAction] = useState<{title: string, msg: string, action: () => void} | null>(null);
+
+  const showToast = (msg: string, isError = false) => {
+    setToastMessage({ show: true, msg, isError });
+    setTimeout(() => setToastMessage({ show: false, msg: '', isError: false }), 3000);
+  };
+
+  const markUnsaved = () => setHasUnsavedChanges(true);
 
   const toggle = (key: string) => {
-    setToggles(prev => ({ ...prev, [key]: !prev[key] }));
+    setToggles((prev: any) => ({ ...prev, [key]: !prev[key] }));
+    markUnsaved();
+  };
+
+  const handleSliderChange = (key: string, val: number) => {
+    setSliders((prev: any) => ({ ...prev, [key]: val }));
+    markUnsaved();
+  };
+
+  const handleSaveSettings = () => {
+    localStorage.setItem('trinetra_profile', JSON.stringify(profile));
+    localStorage.setItem('trinetra_sliders', JSON.stringify(sliders));
+    localStorage.setItem('trinetra_toggles', JSON.stringify(toggles));
+    setHasUnsavedChanges(false);
+    showToast("Settings saved successfully.");
+  };
+
+  const handleResetSettings = () => {
+    setProfile(JSON.parse(localStorage.getItem('trinetra_profile') || JSON.stringify(defaultProfile)));
+    setSliders(JSON.parse(localStorage.getItem('trinetra_sliders') || JSON.stringify(defaultSliders)));
+    setToggles(JSON.parse(localStorage.getItem('trinetra_toggles') || JSON.stringify(defaultToggles)));
+    setHasUnsavedChanges(false);
+    showToast("Changes reset.");
+  };
+
+  const saveProfileModal = () => {
+    setProfile(editProfile);
+    setActiveModal(null);
+    markUnsaved();
+  };
+
+  const savePasswordModal = () => {
+    if (passwords.new !== passwords.confirm) {
+      alert("New passwords do not match!");
+      return;
+    }
+    setActiveModal(null);
+    setPasswords({ current: '', new: '', confirm: '' });
+    showToast("Password updated successfully.");
+  };
+
+  const triggerDanger = (title: string, msg: string, action: () => void) => {
+    setDangerAction({ title, msg, action });
+    setActiveModal('danger');
+  };
+
+  const executeDanger = () => {
+    if (dangerAction) dangerAction.action();
+    setActiveModal(null);
   };
 
   return (
     <div className="flex flex-col gap-6 pb-24 relative">
       
+      {/* Toast Notification */}
+      {toastMessage.show && (
+        <div className="fixed top-8 right-8 z-[200] transition-all duration-300">
+          <div className={`border px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 backdrop-blur-md text-white ${toastMessage.isError ? 'bg-critical/90 border-critical' : 'bg-safe/90 border-safe'}`}>
+            {toastMessage.isError ? <AlertTriangle size={20} /> : <CheckCircle2 size={20} />}
+            <span className="text-sm font-medium">{toastMessage.msg}</span>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white mb-1">Settings</h1>
@@ -45,22 +118,22 @@ const Settings = () => {
           
           <div className="flex items-center gap-4 mb-6">
             <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold shadow-[0_0_15px_rgba(59,130,246,0.5)] shrink-0">
-              RS
+              {profile.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
             </div>
             <div>
-              <h3 className="font-bold text-lg text-white leading-tight">Cmdr. R. Sharma</h3>
-              <p className="text-xs text-gray-400 mt-1">Operations Commander</p>
+              <h3 className="font-bold text-lg text-white leading-tight">{profile.name}</h3>
+              <p className="text-xs text-gray-400 mt-1">{profile.role}</p>
             </div>
           </div>
 
           <div className="space-y-3 mb-6 bg-background/50 border border-cardBorder rounded-lg p-4 flex-1">
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">Region</span>
-              <span className="text-white font-medium">North • UP Sector 7</span>
+              <span className="text-white font-medium">{profile.region}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">Shift</span>
-              <span className="text-white font-medium">14:00–22:00 IST</span>
+              <span className="text-white font-medium">{profile.shift}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">Status</span>
@@ -86,10 +159,10 @@ const Settings = () => {
           </div>
 
           <div className="flex gap-3 mt-auto">
-            <button className="flex-1 bg-card hover:bg-cardBorder/50 border border-cardBorder text-gray-300 font-medium py-2 rounded-lg transition-colors text-sm">
+            <button onClick={() => { setEditProfile(profile); setActiveModal('profile'); }} className="flex-1 bg-card hover:bg-cardBorder/50 border border-cardBorder text-gray-300 font-medium py-2 rounded-lg transition-colors text-sm">
               Edit Profile
             </button>
-            <button className="flex-1 bg-card hover:bg-cardBorder/50 border border-cardBorder text-gray-300 font-medium py-2 rounded-lg transition-colors text-sm">
+            <button onClick={() => setActiveModal('password')} className="flex-1 bg-card hover:bg-cardBorder/50 border border-cardBorder text-gray-300 font-medium py-2 rounded-lg transition-colors text-sm">
               Password
             </button>
           </div>
@@ -98,25 +171,31 @@ const Settings = () => {
         {/* CARD 2: ALERT THRESHOLDS (Span 8) */}
         <div className="xl:col-span-8 glass-card p-6 flex flex-col h-full">
           <h2 className="text-sm font-bold text-white uppercase tracking-widest mb-2 flex items-center gap-2">
-            <Sliders size={16} className="text-warning" /> Alert Thresholds
+            <SlidersIcon size={16} className="text-warning" /> Alert Thresholds
           </h2>
           <p className="text-xs text-gray-400 mb-6">Trigger sensitivity for auto-escalation</p>
 
           <div className="flex-1 flex flex-col justify-center space-y-8 bg-background/50 border border-cardBorder p-6 rounded-lg">
             {[
-              { label: 'Crowd density alert', val: '85%', width: '85%' },
-              { label: 'Heat index alert', val: '38°C', width: '38%' },
-              { label: 'Incident escalation threshold', val: '72/100', width: '72%' },
-              { label: 'AI Auto-dispatch confidence', val: '90%', width: '90%' },
+              { key: 'crowd', label: 'Crowd density alert', val: sliders.crowd, suffix: '%', max: 100 },
+              { key: 'heat', label: 'Heat index alert', val: sliders.heat, suffix: '°C', max: 60 },
+              { key: 'incident', label: 'Incident escalation threshold', val: sliders.incident, suffix: '/100', max: 100 },
+              { key: 'autoDispatch', label: 'AI Auto-dispatch confidence', val: sliders.autoDispatch, suffix: '%', max: 100 },
             ].map((item, i) => (
               <div key={i}>
                 <div className="flex justify-between text-sm mb-3">
                   <span className="text-gray-200 font-medium">{item.label}</span>
-                  <span className="text-primary font-bold">{item.val}</span>
+                  <span className="text-primary font-bold">{item.val}{item.suffix}</span>
                 </div>
-                <div className="w-full h-1.5 bg-card border border-cardBorder rounded-full relative cursor-pointer group">
-                  <div className="absolute top-0 left-0 h-full bg-primary rounded-full shadow-[0_0_10px_rgba(59,130,246,0.6)]" style={{ width: item.width }}></div>
-                  <div className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-md hover:scale-125 transition-transform" style={{ left: `calc(${item.width} - 8px)` }}></div>
+                <div className="w-full relative">
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max={item.max} 
+                    value={item.val} 
+                    onChange={(e) => handleSliderChange(item.key, parseInt(e.target.value))}
+                    className="w-full h-1.5 bg-card border border-cardBorder rounded-full appearance-none cursor-pointer accent-primary outline-none"
+                  />
                 </div>
               </div>
             ))}
@@ -251,10 +330,10 @@ const Settings = () => {
           </div>
 
           <div className="flex gap-3 mt-auto">
-            <button className="flex-1 bg-card hover:bg-cardBorder/50 border border-cardBorder text-gray-300 font-medium py-2 rounded-lg transition-colors text-sm">
+            <button onClick={() => setActiveModal('sessions')} className="flex-1 bg-card hover:bg-cardBorder/50 border border-cardBorder text-gray-300 font-medium py-2 rounded-lg transition-colors text-sm">
               Manage Sessions
             </button>
-            <button className="flex-1 bg-card hover:bg-cardBorder/50 border border-cardBorder text-gray-300 font-medium py-2 rounded-lg transition-colors text-sm">
+            <button onClick={() => setActiveModal('logs')} className="flex-1 bg-card hover:bg-cardBorder/50 border border-cardBorder text-gray-300 font-medium py-2 rounded-lg transition-colors text-sm">
               Security Logs
             </button>
           </div>
@@ -270,19 +349,26 @@ const Settings = () => {
           <p className="text-xs text-gray-400 mb-6">System-level administrative controls. Use with caution.</p>
           
           <div className="flex flex-wrap gap-4">
-            <button className="bg-card hover:bg-cardBorder/50 border border-cardBorder text-gray-300 font-medium py-2.5 px-4 rounded-lg transition-colors text-sm flex items-center gap-2">
+            <button onClick={() => {
+              const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({profile, sliders, toggles}));
+              const anchor = document.createElement('a'); anchor.href = dataStr; anchor.download = "trinetra_config.json"; anchor.click();
+            }} className="bg-card hover:bg-cardBorder/50 border border-cardBorder text-gray-300 font-medium py-2.5 px-4 rounded-lg transition-colors text-sm flex items-center gap-2">
               <Download size={14} /> Export Configuration
             </button>
-            <button className="bg-card hover:bg-cardBorder/50 border border-cardBorder text-gray-300 font-medium py-2.5 px-4 rounded-lg transition-colors text-sm flex items-center gap-2">
+            <button onClick={() => showToast("Settings backup completed.")} className="bg-card hover:bg-cardBorder/50 border border-cardBorder text-gray-300 font-medium py-2.5 px-4 rounded-lg transition-colors text-sm flex items-center gap-2">
               <Database size={14} /> Backup Settings
             </button>
-            <button className="bg-card hover:bg-cardBorder/50 border border-cardBorder text-gray-300 font-medium py-2.5 px-4 rounded-lg transition-colors text-sm flex items-center gap-2">
+            <button onClick={() => triggerDanger("Restart AI Services", "Are you sure you want to restart all AI microservices? This may cause a temporary delay in processing.", () => showToast("AI services restarted."))} className="bg-card hover:bg-cardBorder/50 border border-cardBorder text-gray-300 font-medium py-2.5 px-4 rounded-lg transition-colors text-sm flex items-center gap-2">
               <RefreshCw size={14} /> Restart AI Services
             </button>
-            <button className="bg-card hover:bg-cardBorder/50 border border-cardBorder text-gray-300 font-medium py-2.5 px-4 rounded-lg transition-colors text-sm flex items-center gap-2">
+            <button onClick={() => triggerDanger("Reset To Default", "Are you sure you want to revert all settings to their default factory state? This cannot be undone.", () => {
+              setProfile(defaultProfile); setSliders(defaultSliders); setToggles(defaultToggles);
+              localStorage.removeItem('trinetra_profile'); localStorage.removeItem('trinetra_sliders'); localStorage.removeItem('trinetra_toggles');
+              showToast("All settings have been reset to default.");
+            })} className="bg-card hover:bg-cardBorder/50 border border-cardBorder text-gray-300 font-medium py-2.5 px-4 rounded-lg transition-colors text-sm flex items-center gap-2">
               <RefreshCw size={14} /> Reset To Default
             </button>
-            <button className="bg-[#FF1744]/10 border border-[#FF1744]/30 hover:bg-[#FF1744]/20 text-[#FF1744] font-medium py-2.5 px-6 rounded-lg transition-colors text-sm flex items-center gap-2 ml-auto">
+            <button onClick={() => triggerDanger("EMERGENCY LOCKDOWN", "WARNING: This will lock all ground systems, disable external APIs, and enter offline defensive mode. Proceed?", () => showToast("Emergency lockdown activated.", true))} className="bg-[#FF1744]/10 border border-[#FF1744]/30 hover:bg-[#FF1744]/20 text-[#FF1744] font-medium py-2.5 px-6 rounded-lg transition-colors text-sm flex items-center gap-2 ml-auto">
               <Trash2 size={14} /> Emergency Lockdown
             </button>
           </div>
@@ -291,15 +377,147 @@ const Settings = () => {
       </div>
 
       {/* Sticky Save Bar */}
-      <div className="fixed bottom-0 right-0 p-4 bg-[#050B18]/90 backdrop-blur-md border-t border-cardBorder w-full lg:w-[calc(100%-16rem)] flex justify-end items-center gap-4 z-50">
-        <span className="text-xs text-gray-400 italic mr-2">You have unsaved changes</span>
-        <button className="text-gray-300 hover:text-white font-medium py-2 px-4 transition-colors text-sm">
-          Reset
-        </button>
-        <button className="bg-primary hover:bg-primary/90 text-white font-bold py-2.5 px-8 rounded-lg transition-colors shadow-[0_0_15px_rgba(59,130,246,0.3)]">
-          Save Changes
-        </button>
-      </div>
+      {hasUnsavedChanges && (
+        <div className="fixed bottom-0 right-0 p-4 bg-[#050B18]/95 backdrop-blur-md border-t border-cardBorder w-full lg:w-[calc(100%-16rem)] flex justify-end items-center gap-4 z-40 animate-[slideUp_0.3s_ease-out]">
+          <span className="text-xs text-warning italic mr-2 flex items-center gap-2"><AlertCircle size={14}/> You have unsaved changes</span>
+          <button onClick={handleResetSettings} className="text-gray-300 hover:text-white font-medium py-2 px-4 transition-colors text-sm">
+            Reset
+          </button>
+          <button onClick={handleSaveSettings} className="bg-primary hover:bg-primary/90 text-white font-bold py-2.5 px-8 rounded-lg transition-colors shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+            Save Changes
+          </button>
+        </div>
+      )}
+
+      {/* MODALS */}
+      {activeModal === 'profile' && (
+        <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0A192F] border border-cardBorder w-full max-w-md rounded-xl shadow-2xl p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-bold text-white">Edit Profile</h3>
+              <X size={20} className="text-gray-400 cursor-pointer hover:text-white" onClick={() => setActiveModal(null)} />
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Operator Name</label>
+                <input type="text" value={editProfile.name} onChange={e => setEditProfile({...editProfile, name: e.target.value})} className="w-full bg-background border border-cardBorder rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-primary" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Role</label>
+                <input type="text" value={editProfile.role} onChange={e => setEditProfile({...editProfile, role: e.target.value})} className="w-full bg-background border border-cardBorder rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-primary" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Region</label>
+                <input type="text" value={editProfile.region} onChange={e => setEditProfile({...editProfile, region: e.target.value})} className="w-full bg-background border border-cardBorder rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-primary" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Shift</label>
+                <input type="text" value={editProfile.shift} onChange={e => setEditProfile({...editProfile, shift: e.target.value})} className="w-full bg-background border border-cardBorder rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-primary" />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-8">
+              <button onClick={() => setActiveModal(null)} className="flex-1 border border-cardBorder text-gray-300 py-2 rounded-lg text-sm">Cancel</button>
+              <button onClick={saveProfileModal} className="flex-1 bg-primary text-white font-bold py-2 rounded-lg text-sm">Apply</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeModal === 'password' && (
+        <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0A192F] border border-cardBorder w-full max-w-md rounded-xl shadow-2xl p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-bold text-white">Change Password</h3>
+              <X size={20} className="text-gray-400 cursor-pointer hover:text-white" onClick={() => setActiveModal(null)} />
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Current Password</label>
+                <input type="password" value={passwords.current} onChange={e => setPasswords({...passwords, current: e.target.value})} className="w-full bg-background border border-cardBorder rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-primary" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">New Password</label>
+                <input type="password" value={passwords.new} onChange={e => setPasswords({...passwords, new: e.target.value})} className="w-full bg-background border border-cardBorder rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-primary" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Confirm Password</label>
+                <input type="password" value={passwords.confirm} onChange={e => setPasswords({...passwords, confirm: e.target.value})} className="w-full bg-background border border-cardBorder rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-primary" />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-8">
+              <button onClick={() => setActiveModal(null)} className="flex-1 border border-cardBorder text-gray-300 py-2 rounded-lg text-sm">Cancel</button>
+              <button onClick={savePasswordModal} className="flex-1 bg-primary text-white font-bold py-2 rounded-lg text-sm">Update Password</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeModal === 'sessions' && (
+        <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0A192F] border border-cardBorder w-full max-w-lg rounded-xl shadow-2xl p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-bold text-white">Active Sessions</h3>
+              <X size={20} className="text-gray-400 cursor-pointer hover:text-white" onClick={() => setActiveModal(null)} />
+            </div>
+            <div className="space-y-3">
+              {['Current Device', 'Command Tablet', 'Mobile Backup Device', 'Control Room Terminal'].map((sess, i) => (
+                <div key={i} className="flex justify-between items-center bg-background/50 border border-cardBorder p-3 rounded-lg">
+                  <div>
+                    <div className="text-sm font-bold text-white flex items-center gap-2">{sess} {i === 0 && <span className="text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded uppercase">This Device</span>}</div>
+                    <div className="text-xs text-gray-400">IP: 192.168.1.{10+i} • Last active: {i===0 ? 'Just now' : `${i*2} hours ago`}</div>
+                  </div>
+                  {i !== 0 && <button onClick={() => showToast(`Session '${sess}' revoked.`)} className="text-xs text-[#FF1744] border border-[#FF1744]/30 hover:bg-[#FF1744]/10 px-3 py-1.5 rounded transition-colors">Revoke</button>}
+                </div>
+              ))}
+            </div>
+            <button onClick={() => setActiveModal(null)} className="w-full border border-cardBorder text-gray-300 py-2.5 rounded-lg text-sm mt-6 hover:bg-cardBorder/50">Close</button>
+          </div>
+        </div>
+      )}
+
+      {activeModal === 'logs' && (
+        <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0A192F] border border-cardBorder w-full max-w-lg rounded-xl shadow-2xl p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-bold text-white">Security Logs</h3>
+              <X size={20} className="text-gray-400 cursor-pointer hover:text-white" onClick={() => setActiveModal(null)} />
+            </div>
+            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+              {[
+                { e: 'Successful login from new IP', t: '10 mins ago', c: 'text-safe' },
+                { e: 'Settings updated by Admin', t: '2 hours ago', c: 'text-primary' },
+                { e: 'Emergency lockdown tested', t: '1 day ago', c: 'text-warning' },
+                { e: 'Failed login blocked (x5)', t: '3 days ago', c: 'text-[#FF1744]' },
+                { e: 'Password changed successfully', t: '24 days ago', c: 'text-safe' },
+              ].map((log, i) => (
+                <div key={i} className="flex justify-between items-center bg-background/50 border border-cardBorder p-3 rounded-lg">
+                  <div className={`text-sm font-medium ${log.c}`}>{log.e}</div>
+                  <div className="text-xs text-gray-400">{log.t}</div>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => setActiveModal(null)} className="w-full border border-cardBorder text-gray-300 py-2.5 rounded-lg text-sm mt-6 hover:bg-cardBorder/50">Close</button>
+          </div>
+        </div>
+      )}
+
+      {activeModal === 'danger' && dangerAction && (
+        <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0A192F] border border-[#FF1744]/50 w-full max-w-md rounded-xl shadow-[0_0_30px_rgba(255,23,68,0.2)] p-6">
+            <div className="flex items-center gap-3 mb-4 text-[#FF1744]">
+              <AlertTriangle size={24} />
+              <h3 className="text-lg font-bold">{dangerAction.title}</h3>
+            </div>
+            <p className="text-sm text-gray-300 mb-8 leading-relaxed">
+              {dangerAction.msg}
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setActiveModal(null)} className="flex-1 border border-cardBorder text-gray-300 py-2.5 rounded-lg text-sm hover:bg-cardBorder/50 transition-colors">Cancel</button>
+              <button onClick={executeDanger} className="flex-1 bg-[#FF1744] hover:bg-[#FF1744]/90 text-white font-bold py-2.5 rounded-lg text-sm transition-colors">Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

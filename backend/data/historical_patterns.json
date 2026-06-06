@@ -1,0 +1,420 @@
+[
+{
+"pattern_id": "PAT-001",
+"pattern_name": "Heat Stress Cluster",
+"trigger_signals": [
+"Water station failure",
+"Temperature above 40°C",
+"Queue length above 300",
+"Multiple fainting incidents",
+"Repeated dehydration complaints"
+],
+"risk_indicators": [
+"Crowd density above 85%",
+"Humidity above 55%",
+"Movement speed dropping below 0.3 m/s",
+"Medical reports increasing within 15 minutes"
+],
+"predicted_outcome": "Cluster of heat exhaustion and dehydration cases within the affected zone.",
+"average_escalation_time_minutes": 10,
+"recommended_preventive_actions": [
+"Deploy mobile hydration unit",
+"Open backup water station",
+"Pre-position medical team",
+"Broadcast hydration advisory",
+"Erect temporary shade structures"
+],
+"confidence_baseline": 92,
+"similar_case_reference": "KUMB-2019-H01"
+},
+{
+"pattern_id": "PAT-002",
+"pattern_name": "Crowd Surge",
+"trigger_signals": [
+"Sudden bottleneck formation",
+"Localized noise level spike above 85 dB",
+"Physical barricade pressure alarms",
+"Rapid influx of people exceeding 100 per minute",
+"Sudden stop in forward movement"
+],
+"risk_indicators": [
+"Density exceeding 4 persons per square meter",
+"Agitated crowd behavior identified by cameras",
+"Queue length exceeding safe capacity by 20%",
+"Reports of pushing or claustrophobia"
+],
+"predicted_outcome": "High risk of trampling and crush injuries leading to mass casualties.",
+"average_escalation_time_minutes": 5,
+"recommended_preventive_actions": [
+"Deploy security units to regulate flow",
+"Open secondary lateral exit gates",
+"Broadcast calming instructions on PA system",
+"Halt incoming traffic at previous checkpoint",
+"Dispatch drones for aerial monitoring"
+],
+"confidence_baseline": 88,
+"similar_case_reference": "PURI-2015-S04"
+},
+{
+"pattern_id": "PAT-003",
+"pattern_name": "Fire Hazard Escalation",
+"trigger_signals": [
+"Smoke detection alarm triggered",
+"Thermal camera spike above 80°C",
+"Multiple public app reports of burning smell",
+"Electrical grid voltage drop in zone",
+"Visible spark or localized flash on CCTV"
+],
+"risk_indicators": [
+"High wind speed in immediate vicinity",
+"Presence of highly flammable temporary tents",
+"Density of crowd restricting fire vehicle access",
+"Low water pressure in nearby hydrants"
+],
+"predicted_outcome": "Rapid spread of fire across temporary structures with mass panic.",
+"average_escalation_time_minutes": 7,
+"recommended_preventive_actions": [
+"Dispatch nearest Fire Unit immediately",
+"Isolate electrical grid in affected sector",
+"Initiate localized crowd evacuation protocol",
+"Deploy security to clear access routes",
+"Activate emergency water reserves"
+],
+"confidence_baseline": 94,
+"similar_case_reference": "MECC-2018-F12"
+},
+{
+"pattern_id": "PAT-004",
+"pattern_name": "Panic Rumor Spread",
+"trigger_signals": [
+"Sudden coordinated running in one direction",
+"Spike in social media keywords (bomb, collapse, attack)",
+"Unverified mass SOS alerts from app",
+"Loud anomalous noise detected by sensors",
+"Group scattering behavior on CCTV"
+],
+"risk_indicators": [
+"High ambient noise preventing clear communication",
+"Recent minor incident acting as catalyst",
+"Crowd density near exit bottlenecks",
+"Disrupted mobile network connectivity"
+],
+"predicted_outcome": "Stampede induced by false panic and disorientation.",
+"average_escalation_time_minutes": 4,
+"recommended_preventive_actions": [
+"Broadcast factual reassurance on PA system",
+"Deploy visible security personnel on elevated platforms",
+"Issue counter-messages via SMS and app notifications",
+"Illuminate the area fully if dark",
+"Command drones to broadcast visual calming signals"
+],
+"confidence_baseline": 85,
+"similar_case_reference": "SABR-2011-R02"
+},
+{
+"pattern_id": "PAT-005",
+"pattern_name": "Lost Child Cluster",
+"trigger_signals": [
+"Multiple reports of missing minors within 30 minutes",
+"High cross-flow traffic in transition zones",
+"Sudden weather change causing crowd shifting",
+"Loud event or VIP movement distracting guardians"
+],
+"risk_indicators": [
+"Zone transitioning from low to extreme density",
+"Poorly lit areas near water bodies or exits",
+"Lack of visible volunteer presence",
+"High noise masking cries for help"
+],
+"predicted_outcome": "Increased vulnerability to abduction and severe emotional distress for families.",
+"average_escalation_time_minutes": 15,
+"recommended_preventive_actions": [
+"Activate RFID tracking perimeter scan",
+"Broadcast child descriptions on regional PA",
+"Deploy volunteers to secure exit checkpoints",
+"Establish centralized lost-and-found triage tent",
+"Alert riverfront and transport hub security"
+],
+"confidence_baseline": 78,
+"similar_case_reference": "KUMB-2013-L09"
+},
+{
+"pattern_id": "PAT-006",
+"pattern_name": "Medical Overload",
+"trigger_signals": [
+"Local medical tent capacity reaches 100%",
+"Depletion of critical supplies like ORS or oxygen",
+"Simultaneous dispatch of over 3 ambulances to one zone",
+"Queue forming outside medical facility",
+"Repeated calls for volunteer medical assistance"
+],
+"risk_indicators": [
+"Ongoing extreme weather condition",
+"Elderly demographic concentration > 40%",
+"Distance to main hospital > 5km",
+"Traffic congestion blocking medical transport"
+],
+"predicted_outcome": "Inability to treat critical patients leading to preventable fatalities.",
+"average_escalation_time_minutes": 20,
+"recommended_preventive_actions": [
+"Dispatch mobile medical units to relieve pressure",
+"Request mutual aid from nearby city hospitals",
+"Setup secondary triage outside overloaded tent",
+"Airlift critical supplies via drone",
+"Divert non-critical cases to neighboring zones"
+],
+"confidence_baseline": 91,
+"similar_case_reference": "AMAR-2017-M14"
+},
+{
+"pattern_id": "PAT-007",
+"pattern_name": "Exit Congestion",
+"trigger_signals": [
+"Exit flow rate dropping below 50 people per minute",
+"Drone imagery shows wedge-shaped crowd forming",
+"Transport hub delays causing backup at gates",
+"Physical obstruction detected in exit corridor"
+],
+"risk_indicators": [
+"Event conclusion triggering mass departure",
+"Narrowing of barricades near outer perimeter",
+"Agitation visible in rear of the queue",
+"Inadequate lighting outside the exit gate"
+],
+"predicted_outcome": "Crush injuries against barricades and spillover into unauthorized areas.",
+"average_escalation_time_minutes": 12,
+"recommended_preventive_actions": [
+"Open all auxiliary emergency exits",
+"Deploy traffic management to clear outside transport",
+"Implement staggered departure announcements",
+"Remove temporary barricade constrictions",
+"Dispatch volunteer teams with water to waiting crowd"
+],
+"confidence_baseline": 89,
+"similar_case_reference": "TIRU-2018-E05"
+},
+{
+"pattern_id": "PAT-008",
+"pattern_name": "Water Supply Breakdown",
+"trigger_signals": [
+"Pressure drops to zero in main supply line",
+"Multiple smart taps report offline status",
+"Crowd clustering around empty hydration stations",
+"Maintenance alert for pump failure",
+"Public app complaints of no water"
+],
+"risk_indicators": [
+"Temperature above 35°C",
+"Zone located far from natural water sources",
+"High physical exertion area (stairs/long walks)",
+"Time of day (peak afternoon hours)"
+],
+"predicted_outcome": "Rapid onset of mass dehydration and potential crowd unrest.",
+"average_escalation_time_minutes": 25,
+"recommended_preventive_actions": [
+"Dispatch emergency water tankers immediately",
+"Activate backup overhead reservoirs",
+"Distribute bottled water via volunteer chains",
+"Send maintenance crew to primary pump",
+"Update digital signage with alternate water locations"
+],
+"confidence_baseline": 95,
+"similar_case_reference": "UJJN-2016-W08"
+},
+{
+"pattern_id": "PAT-009",
+"pattern_name": "Security Breach Escalation",
+"trigger_signals": [
+"VIP lane physical barricade breach",
+"Unauthorized drone detected in restricted airspace",
+"Multiple CCTV cameras tampered or blinded",
+"Sudden concentrated movement away from checkpoints",
+"Metal detector continuous alarm loop"
+],
+"risk_indicators": [
+"High-profile dignitary presence in zone",
+"Understaffed security perimeter",
+"Poor visibility or nighttime conditions",
+"Simultaneous distraction incident nearby"
+],
+"predicted_outcome": "Unauthorized access leading to threat to life or severe disruption of order.",
+"average_escalation_time_minutes": 3,
+"recommended_preventive_actions": [
+"Trigger perimeter lockdown protocol",
+"Deploy rapid response tactical units",
+"Evacuate VIPs to safe rooms",
+"Increase lighting in breached sector",
+"Isolate breached area using physical barriers"
+],
+"confidence_baseline": 82,
+"similar_case_reference": "DELH-2022-B02"
+},
+{
+"pattern_id": "PAT-010",
+"pattern_name": "Transport Hub Overcrowding",
+"trigger_signals": [
+"Bus or train delays exceeding 45 minutes",
+"Waiting area density crosses 90%",
+"Spillover of passengers onto approach roads",
+"Scuffles reported near boarding points",
+"Vehicular traffic completely stalled"
+],
+"risk_indicators": [
+"End of major religious or public event",
+"Limited frequency of scheduled transport",
+"Lack of designated queuing infrastructure",
+"Presence of heavy luggage among crowd"
+],
+"predicted_outcome": "Stampede during vehicle boarding and gridlock blocking emergency services.",
+"average_escalation_time_minutes": 30,
+"recommended_preventive_actions": [
+"Request emergency supplementary fleet from city administration",
+"Establish rigid rope queues for boarding",
+"Hold returning crowds in safe waiting zones away from hub",
+"Provide free water and seating for waiting passengers",
+"Deploy traffic police to clear exit arteries"
+],
+"confidence_baseline": 86,
+"similar_case_reference": "NASK-2015-T07"
+},
+{
+"pattern_id": "PAT-011",
+"pattern_name": "Riverfront Slip Hazard",
+"trigger_signals": [
+"Water level rising unexpectedly",
+"Algae buildup reported by patrols",
+"Multiple minor slip-and-fall incidents",
+"Overcrowding on lower ghat steps",
+"Muddy runoff from broken pipes nearby"
+],
+"risk_indicators": [
+"Recent heavy rainfall",
+"High density of elderly pilgrims",
+"Inadequate railing infrastructure",
+"Poor surface friction on stone steps"
+],
+"predicted_outcome": "Mass fall events leading to drowning or severe head injuries.",
+"average_escalation_time_minutes": 15,
+"recommended_preventive_actions": [
+"Cordon off lower three steps with ropes",
+"Deploy volunteer divers and rescue boats",
+"Apply sand or anti-slip mats to pathways",
+"Broadcast warnings to walk slowly",
+"Station medical responders at the top of the stairs"
+],
+"confidence_baseline": 80,
+"similar_case_reference": "VARN-2020-R03"
+},
+{
+"pattern_id": "PAT-012",
+"pattern_name": "Stampede Precursor Pattern",
+"trigger_signals": [
+"Bidirectional crowd flow collision",
+"Sudden narrowing of pathway ahead",
+"Visible stumbling and falling without space to recover",
+"Aggressive pushing behaviors captured by AI",
+"Shoe or clothing debris detected on ground"
+],
+"risk_indicators": [
+"Crowd density above 6 persons per square meter",
+"Panic-inducing rumors circulating",
+"Lack of visible authority figures",
+"Slippery or uneven terrain"
+],
+"predicted_outcome": "Catastrophic crush event and mass fatalities.",
+"average_escalation_time_minutes": 2,
+"recommended_preventive_actions": [
+"Immediately open all escape valves and lateral exits",
+"Deploy command vehicle with loud sirens to break crowd trance",
+"Form human chains to segment crowd pressure",
+"Stop all inflows at source gates",
+"Drop barricades causing the bottleneck"
+],
+"confidence_baseline": 93,
+"similar_case_reference": "MAND-2005-S01"
+},
+{
+"pattern_id": "PAT-013",
+"pattern_name": "Infrastructure Failure",
+"trigger_signals": [
+"Bridge load sensors indicating stress limits",
+"Visible bending of main barricade supports",
+"Power grid trip across multiple zones",
+"Sudden loss of communication telemetry",
+"Reports of falling debris from temporary stages"
+],
+"risk_indicators": [
+"High wind or extreme weather conditions",
+"Structures built rapidly without full inspection",
+"Vibration frequency matching crowd footfalls",
+"Overcapacity on elevated walkways"
+],
+"predicted_outcome": "Structural collapse causing mass casualties and trapping people.",
+"average_escalation_time_minutes": 8,
+"recommended_preventive_actions": [
+"Evacuate immediate structure and exclusion zone",
+"Route crowd away from failing infrastructure",
+"Dispatch engineering and maintenance teams",
+"Deploy mobile lighting if power fails",
+"Prepare heavy lifting equipment on standby"
+],
+"confidence_baseline": 84,
+"similar_case_reference": "KOLK-2016-I11"
+},
+{
+"pattern_id": "PAT-014",
+"pattern_name": "Volunteer Shortage",
+"trigger_signals": [
+"Over 40% of assigned volunteers off-grid",
+"Unanswered dispatch requests exceeding 10 minutes",
+"Help desks reported unattended",
+"Crowd control ropes dropped or abandoned",
+"Volunteers reporting exhaustion or medical issues"
+],
+"risk_indicators": [
+"Shift changes during peak hours",
+"Extreme environmental conditions",
+"Poor communication coordination",
+"Unprecedented scale of crowd arrivals"
+],
+"predicted_outcome": "Loss of localized crowd control and increased vulnerability for lost or sick pilgrims.",
+"average_escalation_time_minutes": 45,
+"recommended_preventive_actions": [
+"Mandate emergency shift extensions",
+"Redeploy reserves from low-risk zones",
+"Substitute with available security personnel",
+"Initiate quick-rest rotation protocol",
+"Utilize digital signage for self-service guidance"
+],
+"confidence_baseline": 72,
+"similar_case_reference": "AYOD-2024-V06"
+},
+{
+"pattern_id": "PAT-015",
+"pattern_name": "Communication Failure",
+"trigger_signals": [
+"Loss of heartbeats from >30% of field radios",
+"Cell tower bandwidth drops to zero",
+"Central command dashboard UI frozen",
+"Inability to broadcast PA announcements",
+"Drones losing control link"
+],
+"risk_indicators": [
+"Severe solar flare or electromagnetic interference",
+"Physical damage to main fiber optic lines",
+"Cyber attack targeting control servers",
+"Massive localized gathering jamming towers"
+],
+"predicted_outcome": "Complete loss of situational awareness and delayed emergency response.",
+"average_escalation_time_minutes": 5,
+"recommended_preventive_actions": [
+"Switch to satellite backup communications",
+"Deploy runners/messengers between key zones",
+"Activate autonomous drone patrol mode",
+"Switch all remaining units to localized ad-hoc mesh networks",
+"Raise visual flag signals at command posts"
+],
+"confidence_baseline": 88,
+"similar_case_reference": "KEDR-2013-C09"
+}
+]

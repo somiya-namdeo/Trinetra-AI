@@ -9,16 +9,29 @@ const ResourceStatus = () => {
     const fetchResources = async () => {
       const data = await getResources();
       if (data && Array.isArray(data) && data.length > 0) {
-        const medicalTotal = data.filter(u => u.type === 'Medical').length;
-        const medicalAvail = data.filter(u => u.type === 'Medical' && u.status === 'Available').length;
-        const secTotal = data.filter(u => u.type === 'Security').length;
-        const secAvail = data.filter(u => u.type === 'Security' && u.status === 'Available').length;
+        const countByType = (targetType: string, statusFilter?: string) => {
+          return data.filter((u: any) => {
+            const isMatch = u.type?.toLowerCase() === targetType.toLowerCase();
+            if (!isMatch) return false;
+            if (statusFilter) return u.status?.toLowerCase() === statusFilter.toLowerCase();
+            return true;
+          }).length;
+        };
+
+        const medicalTotal = countByType('Medical Team');
+        const medicalAvail = countByType('Medical Team', 'available');
+        const secTotal = countByType('Security Unit');
+        const secAvail = countByType('Security Unit', 'available');
+        const ambTotal = countByType('Ambulance');
+        const ambAvail = countByType('Ambulance', 'available');
+        const waterTotal = countByType('Water Supply Unit');
+        const waterAvail = countByType('Water Supply Unit', 'available');
         
         setStats([
-          { type: 'Medical', available: medicalAvail, total: medicalTotal || 4, color: 'bg-primary' },
-          { type: 'Security', available: secAvail, total: secTotal || 6, color: 'bg-warning' },
-          resourceStats[2], // Keep Fire/Hazmat mock fallback
-          resourceStats[3]  // Keep Logistics mock fallback
+          { type: 'Medical Teams', available: medicalAvail, total: medicalTotal, color: 'bg-primary' },
+          { type: 'Security Units', available: secAvail, total: secTotal, color: 'bg-warning' },
+          { type: 'Ambulances', available: ambAvail, total: ambTotal, color: 'bg-critical' },
+          { type: 'Water Supply', available: waterAvail, total: waterTotal, color: 'bg-[#19B5D8]' }
         ]);
       }
     };
@@ -42,7 +55,7 @@ const ResourceStatus = () => {
               <div className="w-full bg-cardBorder h-2 rounded-full overflow-hidden">
                 <div 
                   className={`h-full rounded-full ${stat.color}`} 
-                  style={{ width: `${percentage}%` }}
+                  style={{ width: stat.total > 0 ? `${percentage}%` : '0%' }}
                 ></div>
               </div>
             </div>

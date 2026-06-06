@@ -1,27 +1,77 @@
 import React, { useEffect, useState } from 'react';
-import { BrainCircuit, Network, Activity, ShieldAlert, HeartPulse, MessageSquareWarning, Zap, ArrowRight, AlertTriangle, Droplet, Users, Clock, CheckCircle2, Search, Database, LocateFixed, GitCommit } from 'lucide-react';
-import { getMemoryInsight } from '../services/api';
+import { BrainCircuit, Network, Activity, ShieldAlert, HeartPulse, MessageSquareWarning, Zap, ArrowRight, AlertTriangle, Droplet, Users, Clock, CheckCircle2, Search, Database, LocateFixed, GitCommit, Loader2 } from 'lucide-react';
+import { getMemoryInsight, generateAlert } from '../services/api';
 
 const MemoryAI = () => {
   const [insightData, setInsightData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [actionStates, setActionStates] = useState<Record<number, 'pending' | 'executing' | 'executed'>>({});
+  const [actionSummaries, setActionSummaries] = useState<Record<number, string>>({});
+  const [toastMessage, setToastMessage] = useState<{ show: boolean, msg: string }>({ show: false, msg: '' });
+  
+  const executedCount = Object.values(actionStates).filter(s => s === 'executed').length;
 
   useEffect(() => {
     const fetchInsight = async () => {
+      setLoading(true);
       const data = await getMemoryInsight();
       if (data) setInsightData(data);
+      setLoading(false);
     };
     fetchInsight();
   }, []);
 
+  const handleExecute = async (idx: number, actionText: string) => {
+    setActionStates(prev => ({ ...prev, [idx]: 'executing' }));
+    
+    await new Promise(r => setTimeout(r, 1000));
+    
+    setActionStates(prev => ({ ...prev, [idx]: 'executed' }));
+    
+    const textLower = actionText.toLowerCase();
+    let toast = "Memory AI action executed successfully.";
+    
+    if (textLower.includes('dispatch fire response team') || 
+        textLower.includes('deploy mobile hydration unit') || 
+        textLower.includes('pre-position medical team') || 
+        textLower.includes('deploy security')) {
+        setActionSummaries(prev => ({ ...prev, [idx]: "Resource dispatch triggered" }));
+    } else if (textLower.includes('broadcast')) {
+        toast = "Broadcast generated from Memory AI recommendation.";
+        if (insightData) {
+          await generateAlert({
+            incident_type: insightData.pattern_detected || 'Unknown Pattern',
+            location: insightData.affected_zone || 'Unknown Zone',
+            severity: insightData.severity || 'High'
+          });
+        }
+    } else if (textLower.includes('evacuate') || textLower.includes('clear emergency access routes')) {
+        toast = "Operational command issued.";
+    }
+    
+    setToastMessage({ show: true, msg: toast });
+    setTimeout(() => setToastMessage({ show: false, msg: '' }), 4000);
+  };
+
   return (
     <div className="flex flex-col gap-6 pb-10">
+      
+      {/* Toast Notification */}
+      {toastMessage.show && (
+        <div className="fixed top-8 right-8 z-50 transition-all duration-300">
+          <div className="bg-safe/90 border border-safe text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 backdrop-blur-md">
+            <CheckCircle2 size={20} />
+            <span className="text-sm font-medium">{toastMessage.msg}</span>
+          </div>
+        </div>
+      )}
       
       {/* Header */}
       <div className="flex justify-between items-end">
         <div>
           <h1 className="text-2xl font-bold text-white mb-1 flex items-center gap-3">
             <BrainCircuit className="text-secondary" size={28} />
-            Emergency Memory AI
+            Emergency Memory AI {loading && <span className="text-sm font-normal text-secondary animate-pulse ml-2">Analyzing signals...</span>}
           </h1>
           <p className="text-sm text-gray-400">Cross-incident intelligence, pattern detection, and predictive operational reasoning.</p>
         </div>
@@ -41,9 +91,9 @@ const MemoryAI = () => {
       <div className="grid grid-cols-4 gap-4">
         {[
           { label: 'Historical Incidents Analyzed', value: '48,291', color: 'text-primary', border: 'border-primary/30', bg: 'bg-primary/5' },
-          { label: 'Active Correlations', value: '127', color: 'text-secondary', border: 'border-secondary/30', bg: 'bg-secondary/5' },
-          { label: 'Predicted Escalations', value: '12', color: 'text-critical', border: 'border-critical/30', bg: 'bg-critical/5' },
-          { label: 'AI Confidence', value: '87%', color: 'text-safe', border: 'border-safe/30', bg: 'bg-safe/5' }
+          { label: 'Linked Signals', value: insightData?.linked_signals?.length || '4', color: 'text-secondary', border: 'border-secondary/30', bg: 'bg-secondary/5' },
+          { label: 'Predicted Escalation', value: insightData?.predicted_escalation || '8-12 mins', color: 'text-critical', border: 'border-critical/30', bg: 'bg-critical/5' },
+          { label: 'AI Confidence', value: insightData?.confidence ? `${insightData.confidence}%` : '87%', color: 'text-safe', border: 'border-safe/30', bg: 'bg-safe/5' }
         ].map((stat, i) => (
           <div key={i} className={`glass-card p-5 border ${stat.border} ${stat.bg} shadow-[0_0_15px_rgba(0,0,0,0.2)] hover:-translate-y-1 transition-transform`}>
             <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-2">{stat.label}</p>
@@ -133,7 +183,14 @@ const MemoryAI = () => {
           </div>
           <div className="flex-1 p-4 overflow-y-auto space-y-3">
             {[
-              { title: 'Potential Heat Stress Cluster', conf: '87%', loc: 'Zone A', sev: 'HIGH', badge: 'bg-critical/20 text-critical border-critical/30', action: 'Suggesting hydration unit' },
+              { 
+                title: insightData?.pattern_detected || 'Potential Heat Stress Cluster', 
+                conf: insightData?.confidence ? `${insightData.confidence}%` : '87%', 
+                loc: insightData?.affected_zone || 'Zone A', 
+                sev: insightData?.severity?.toUpperCase() || 'HIGH', 
+                badge: (insightData?.severity === 'Critical' || insightData?.severity === 'CRITICAL') ? 'bg-[#ff003c]/20 text-[#ff003c] border-[#ff003c]/30' : 'bg-critical/20 text-critical border-critical/30', 
+                action: `Risk Score: ${insightData?.risk_score || 96}` 
+              },
               { title: 'Crowd Surge Risk Detected', conf: '74%', loc: 'North Gate', sev: 'MEDIUM', badge: 'bg-warning/20 text-warning border-warning/30', action: 'Suggesting gate reroute' },
               { title: 'Repeated Water Station Failures', conf: '82%', loc: 'Zone A', sev: 'HIGH', badge: 'bg-critical/20 text-critical border-critical/30', action: 'Correlating with heat metrics' },
               { title: 'Lost Child Pattern Correlation', conf: '91%', loc: 'Zone C', sev: 'CRITICAL', badge: 'bg-[#ff003c]/20 text-[#ff003c] border-[#ff003c]/30', action: 'Locking down exit points' },
@@ -168,30 +225,40 @@ const MemoryAI = () => {
               <h3 className="font-bold text-white text-sm">{insightData?.pattern_detected || 'Repeated Medical Incidents'}</h3>
             </div>
             <div className="bg-black/30 rounded p-3 text-sm text-gray-300 border border-white/5">
-              <span className="text-warning font-bold text-[10px] uppercase tracking-widest block mb-1">AI Discovered:</span>
-              {insightData?.reasoning_trace?.[0] || '32% increase in elderly distress events between 14:00–16:00 near Gate 7.'}
+              <span className="text-warning font-bold text-[10px] uppercase tracking-widest block mb-1">Reasoning Trace:</span>
+              {insightData?.reasoning_trace ? (
+                <div className="space-y-1">
+                  {insightData.reasoning_trace.map((step: string, idx: number) => (
+                    <div key={idx} className="flex gap-2"><span className="text-warning opacity-50">↳</span> <span className="text-xs">{step}</span></div>
+                  ))}
+                </div>
+              ) : '32% increase in elderly distress events between 14:00–16:00 near Gate 7.'}
             </div>
           </div>
           
           <div className="glass-card p-5 border-l-2 border-l-primary">
             <div className="flex items-center gap-3 mb-3">
               <div className="bg-primary/20 p-2 rounded text-primary"><Users size={16} /></div>
-              <h3 className="font-bold text-white text-sm">Crowd Flow Bottleneck</h3>
+              <h3 className="font-bold text-white text-sm">Linked Signals</h3>
             </div>
             <div className="bg-black/30 rounded p-3 text-sm text-gray-300 border border-white/5">
-              <span className="text-primary font-bold text-[10px] uppercase tracking-widest block mb-1">AI Discovered:</span>
-              Recurring congestion every 18 minutes near North Gate.
+              <span className="text-primary font-bold text-[10px] uppercase tracking-widest block mb-1">Correlated Data:</span>
+              {insightData?.linked_signals ? (
+                <ul className="list-disc pl-4 space-y-1 text-xs text-gray-400">
+                  {insightData.linked_signals.map((sig: string, idx: number) => <li key={idx}>{sig}</li>)}
+                </ul>
+              ) : 'Recurring congestion every 18 minutes near North Gate.'}
             </div>
           </div>
           
           <div className="glass-card p-5 border-l-2 border-l-critical">
             <div className="flex items-center gap-3 mb-3">
               <div className="bg-critical/20 p-2 rounded text-critical"><Droplet size={16} /></div>
-              <h3 className="font-bold text-white text-sm">Infrastructure Failure</h3>
+              <h3 className="font-bold text-white text-sm">Predicted Outcome</h3>
             </div>
             <div className="bg-black/30 rounded p-3 text-sm text-gray-300 border border-white/5">
-              <span className="text-critical font-bold text-[10px] uppercase tracking-widest block mb-1">AI Discovered:</span>
-              Water station outages strongly correlate with heat-related incidents.
+              <span className="text-critical font-bold text-[10px] uppercase tracking-widest block mb-1">Risk Escalation:</span>
+              {insightData?.predicted_outcome || 'Water station outages strongly correlate with heat-related incidents.'}
             </div>
           </div>
         </div>
@@ -254,27 +321,47 @@ const MemoryAI = () => {
         </div>
 
         {/* Recommended Actions */}
-        <div className="glass-card p-6 border-l-4 border-l-primary/50">
+        <div className="glass-card p-6 border-l-4 border-l-primary/50 relative">
+          <div className="absolute top-6 right-6 text-xs text-gray-400 font-bold bg-cardBorder/30 px-2 py-1 rounded">
+            Executed: {executedCount} / {insightData?.preventive_actions?.length || 4}
+          </div>
           <h2 className="text-sm font-bold text-white uppercase tracking-widest mb-6 flex items-center gap-2">
             <CheckCircle2 size={16} className="text-primary" /> Memory AI Recommendations
           </h2>
           <div className="space-y-3">
             {(insightData?.preventive_actions || [
-              "Deploy additional hydration unit to Zone A.",
-              "Open auxiliary gate at North Gate.",
-              "Increase medical staffing by 2 units.",
+              "Deploy mobile hydration unit to Zone A.",
+              "Clear emergency access routes at North Gate.",
+              "Pre-position medical team by 2 units.",
               "Broadcast crowd diversion advisory."
-            ]).map((action: string, i: number) => (
-              <div key={i} className="bg-card/40 border border-cardBorder p-3 rounded-lg flex items-center gap-3 hover:bg-card/80 transition-colors">
-                <div className="bg-primary/10 border border-primary/20 text-primary w-6 h-6 rounded flex items-center justify-center text-xs font-bold shrink-0">
-                  {i + 1}
+            ]).map((action: string, i: number) => {
+              const state = actionStates[i] || 'pending';
+              const summary = actionSummaries[i];
+              const isExecuted = state === 'executed';
+              
+              return (
+              <div key={i} className={`border p-3 rounded-lg flex items-center gap-3 transition-colors ${isExecuted ? 'bg-safe/10 border-safe/30' : 'bg-card/40 border-cardBorder hover:bg-card/80'}`}>
+                <div className={`${isExecuted ? 'bg-safe/20 text-safe border-safe/30' : 'bg-primary/10 border-primary/20 text-primary'} border w-6 h-6 rounded flex items-center justify-center text-xs font-bold shrink-0`}>
+                  {isExecuted ? <CheckCircle2 size={14}/> : i + 1}
                 </div>
-                <p className="text-sm text-gray-200 font-medium">{action}</p>
-                <button className="ml-auto text-xs bg-primary hover:bg-primary/90 text-white px-3 py-1.5 rounded transition-colors whitespace-nowrap shadow-[0_0_10px_rgba(14,165,233,0.3)]">
-                  Execute
+                <div>
+                  <p className={`text-sm font-medium ${isExecuted ? 'text-gray-400' : 'text-gray-200'}`}>{action}</p>
+                  {summary && <p className="text-[10px] text-primary mt-1 font-bold">{summary}</p>}
+                </div>
+                <button 
+                  onClick={() => handleExecute(i, action)}
+                  disabled={state !== 'pending'}
+                  className={`ml-auto text-xs px-3 py-1.5 rounded transition-colors whitespace-nowrap ${
+                    state === 'executed' ? 'bg-safe/20 text-safe cursor-default' : 
+                    state === 'executing' ? 'bg-primary/50 text-white cursor-wait' :
+                    'bg-primary hover:bg-primary/90 text-white shadow-[0_0_10px_rgba(14,165,233,0.3)]'
+                  }`}
+                >
+                  {state === 'executing' ? <Loader2 size={12} className="animate-spin inline mr-1"/> : null}
+                  {state === 'executed' ? 'Executed' : state === 'executing' ? 'Executing...' : 'Execute'}
                 </button>
               </div>
-            ))}
+            )})}
           </div>
         </div>
         
