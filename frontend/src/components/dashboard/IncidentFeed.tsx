@@ -13,7 +13,7 @@ const IncidentFeed = () => {
         <button className="text-xs text-primary hover:text-primary/80 transition-colors">View all</button>
       </div>
       
-      <div className="p-4 flex-1 overflow-y-auto space-y-3">
+      <div className="p-4 space-y-3 flex-1">
         {activeIncidents.map((incident) => (
           <div key={incident.id} className="bg-card/50 border border-cardBorder rounded-lg p-3 hover:bg-card/80 transition-colors cursor-pointer">
             <div className="flex justify-between items-start mb-2">

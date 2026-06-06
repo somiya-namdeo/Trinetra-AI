@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
     title="Trinetra-AI Backend",
-    description="Emergency Command Center API",
+    description="AI-Powered Emergency Intelligence & Response Platform API",
     version="1.0.0"
 )
 

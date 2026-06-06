@@ -55,8 +55,8 @@ const LandingPage = () => {
               <Shield size={32} />
             </div>
             <div>
-              <h1 className="font-extrabold text-2xl tracking-wide text-white">ResQNet</h1>
-              <p className="text-[11px] text-primary uppercase tracking-widest font-bold">Sentinel Engine</p>
+              <h1 className="font-extrabold text-2xl tracking-wide text-white">Trinetra AI</h1>
+              <p className="text-[11px] text-primary uppercase tracking-widest font-bold">Where Foresight Becomes Protection</p>
             </div>
           </div>
           <button 
@@ -185,7 +185,7 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-black text-white mb-6 tracking-tight">Mass Gathering Vulnerabilities</h2>
-            <p className="text-lg text-gray-400 max-w-3xl mx-auto font-medium">Traditional monitoring fails at scale. ResQNet anticipates challenges before they become emergencies, providing operational dominance.</p>
+            <p className="text-lg text-gray-400 max-w-3xl mx-auto font-medium">Traditional monitoring fails at scale. Trinetra AI anticipates challenges before they become emergencies, providing operational dominance.</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
@@ -222,7 +222,7 @@ const LandingPage = () => {
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-black text-white mb-6 tracking-tight">Multi-Agent Architecture</h2>
             <p className="text-lg text-gray-400 max-w-3xl mx-auto font-medium">
-              ResQNet Sentinel operates on a collaborative neural network of specialized AI agents. They analyze data streams concurrently to synthesize high-confidence operational intelligence.
+              Trinetra AI operates on a collaborative neural network of specialized AI agents. They analyze data streams concurrently to synthesize high-confidence operational intelligence.
             </p>
           </div>
 
@@ -383,7 +383,7 @@ const LandingPage = () => {
       <section className="py-20 px-6 max-w-7xl mx-auto relative z-10 scroll-animate opacity-0 translate-y-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight">Live Demo Scenario</h2>
-          <p className="text-lg text-gray-400 max-w-2xl mx-auto font-medium">How ResQNet Sentinel autonomously prevents an emergency.</p>
+          <p className="text-lg text-gray-400 max-w-2xl mx-auto font-medium">How Trinetra AI autonomously prevents an emergency.</p>
         </div>
 
         <div className="relative">
@@ -438,7 +438,7 @@ const LandingPage = () => {
         <div className="mt-12 max-w-3xl mx-auto glass-card p-6 border border-primary/40 bg-primary/5 text-center shadow-[0_0_30px_rgba(14,165,233,0.15)] rounded-xl relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent animate-[scan_3s_ease-in-out_infinite_reverse]"></div>
           <p className="text-lg text-white font-medium relative z-10 leading-relaxed">
-            <span className="font-bold text-primary">Demo Impact:</span> ResQNet does not wait for disasters. It connects weak signals and recommends action before escalation.
+            <span className="font-bold text-primary">Demo Impact:</span> Trinetra AI does not wait for disasters. It connects weak signals and recommends action before escalation.
           </p>
         </div>
       </section>
@@ -467,7 +467,7 @@ const LandingPage = () => {
           </div>
 
           <h2 className="text-5xl md:text-6xl font-black text-white mb-8 tracking-tight leading-tight">Ready to secure your next <br/> massive event?</h2>
-          <p className="text-xl text-gray-400 mb-12 max-w-3xl mx-auto font-medium">Deploy ResQNet Sentinel to gain complete situational awareness and AI-driven operational dominance.</p>
+          <p className="text-xl text-gray-400 mb-12 max-w-3xl mx-auto font-medium">Deploy Trinetra AI to gain complete situational awareness and AI-driven operational dominance.</p>
           
           <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
             <button 

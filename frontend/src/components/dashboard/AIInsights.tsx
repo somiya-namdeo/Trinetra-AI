@@ -17,7 +17,7 @@ const AIInsights = () => {
         </div>
       </div>
       
-      <div className="p-4 flex-1 overflow-y-auto space-y-4">
+      <div className="p-4 space-y-4 flex-1">
         {aiPredictions.map((pred, i) => (
           <div key={pred.id} className="bg-card border border-cardBorder rounded-lg p-4">
             <div className="flex gap-3 mb-3">

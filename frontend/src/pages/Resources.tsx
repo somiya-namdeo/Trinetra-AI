@@ -179,9 +179,9 @@ const Resources = () => {
       {/* Main Grid: Resources & Plan */}
       <div className="grid grid-cols-3 gap-6 flex-1">
         {/* Field Units List */}
-        <div className="col-span-2 space-y-4">
+        <div className="col-span-2 flex flex-col gap-4">
           <h3 className="text-sm font-bold text-gray-300 uppercase tracking-widest">Active Field Units</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 flex-1">
             {fieldUnits.map((unit) => {
               const isHighlighted = isOptimized && unit.isRecommended;
               const isUnitAssigned = assignedResources[unit.id];
@@ -245,11 +245,11 @@ const Resources = () => {
         </div>
 
         {/* Recommended Deployment Plan */}
-        <div className="col-span-1 space-y-4">
+        <div className="col-span-1 flex flex-col gap-4">
           <h3 className="text-sm font-bold text-gray-300 uppercase tracking-widest flex items-center gap-2">
             <ShieldAlert size={16} className="text-primary" /> Recommended Plan
           </h3>
-          <div className="glass-card flex flex-col h-full p-4 space-y-3">
+          <div className="glass-card flex flex-col flex-1 p-4 justify-between">
             {deploymentPlan.map((plan, i) => {
               const isExecuted = assignedResources[plan.id];
               return (

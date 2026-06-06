@@ -24,49 +24,58 @@ const Dashboard = () => {
       {/* KPI Cards */}
       <StatsCards />
 
-      {/* Main Grid Layout: 12 Columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Left Column (Main Content - 75%) */}
-        <div className="lg:col-span-9 flex flex-col gap-6">
+      {/* Mission Ops Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="lg:col-span-9">
           <MissionMap />
-          <IncidentFeed />
         </div>
-        
-        {/* Right Sidebar (25%) */}
-        <div className="lg:col-span-3 flex flex-col gap-6">
-          <AIInsights />
-          <QuickActions />
-          <EmergencyBroadcast />
+        <div className="lg:col-span-3">
           <SystemStatus />
         </div>
+      </div>
 
-        {/* Advanced Analytics - Full Width (12 Cols) */}
-        <div className="lg:col-span-12 border-t border-cardBorder pt-6">
-          <h2 className="text-lg font-bold text-white mb-6 text-gradient">Advanced Analytics & Response Panel</h2>
+      {/* Intelligence Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch mt-6">
+        <div className="lg:col-span-6">
+          <IncidentFeed />
+        </div>
+        <div className="lg:col-span-6">
+          <AIInsights />
+        </div>
+        <div className="lg:col-span-12">
+          <QuickActions />
+        </div>
+      </div>
+
+      {/* Advanced Analytics - Full Width */}
+      <div className="border-t border-cardBorder pt-6">
+        <h2 className="text-lg font-bold text-white mb-6 text-gradient">Advanced Analytics & Response Panel</h2>
           
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Row 1: 4 + 4 + 4 */}
-            <div className="lg:col-span-4">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch mb-8">
+            {/* Row 1: 3 + 3 + 6 */}
+            <div className="lg:col-span-3">
               <ResourceStatus />
             </div>
-            <div className="lg:col-span-4">
+            <div className="lg:col-span-3">
               <SectorSummary />
             </div>
-            <div className="lg:col-span-4">
+            <div className="lg:col-span-6">
               <RecentAIDecisions />
             </div>
+          </div>
             
-            {/* Row 2: 4 + 8 */}
+          {/* Row 2: 4 + 4 + 4 */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
             <div className="lg:col-span-4">
               <HistoricalCases />
             </div>
-            <div className="lg:col-span-8">
+            <div className="lg:col-span-4">
+              <EmergencyBroadcast />
+            </div>
+            <div className="lg:col-span-4">
               <ImpactAnalysis />
             </div>
-          </div>
         </div>
-
       </div>
     </div>
   );

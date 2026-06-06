@@ -8,7 +8,7 @@ const SectorSummary = () => {
       <div className="p-4 border-b border-cardBorder">
         <h3 className="font-bold text-white">Sector Health</h3>
       </div>
-      <div className="p-4 flex-1 overflow-y-auto">
+      <div className="p-4 flex-1 flex flex-col justify-center">
         <div className="space-y-3">
           {sectorHealthData.map((sector, idx) => (
             <div key={idx} className="flex items-center justify-between p-2 rounded border border-cardBorder bg-card/40">

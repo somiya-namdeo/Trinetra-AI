@@ -30,8 +30,8 @@ const Sidebar = () => {
         </div>
         {!isCollapsed && (
           <div className="overflow-hidden whitespace-nowrap">
-            <h1 className="font-bold text-lg tracking-wide text-white">ResQNet</h1>
-            <p className="text-[10px] text-gray-400 uppercase tracking-widest">Emergency Command</p>
+            <h1 className="font-bold text-lg tracking-wide text-white">Trinetra AI</h1>
+            <p className="text-[10px] text-gray-400 uppercase tracking-widest">Emergency Intelligence</p>
           </div>
         )}
       </div>

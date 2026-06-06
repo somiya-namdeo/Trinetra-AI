@@ -10,7 +10,7 @@ const EmergencyBroadcast = () => {
           Emergency Broadcast
         </h3>
       </div>
-      <div className="p-4 flex-1 flex flex-col gap-3">
+      <div className="p-4 flex flex-col gap-3 flex-1">
         <div className="bg-card/80 border border-cardBorder rounded p-3">
           <div className="flex items-center gap-2 mb-1 text-xs text-gray-400">
             <Languages size={12} />

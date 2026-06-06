@@ -1,19 +1,21 @@
-# Trinetra-AI: Emergency Command Center
+# Trinetra AI
 
-Trinetra-AI is an advanced, AI-powered emergency operations and situational awareness platform. It provides real-time mission control, incident management, resource tracking, and Memory AI predictive capabilities designed for mass-scale events like the Mahakumbh.
+**Where Foresight Becomes Protection.**
+
+Trinetra AI is an advanced, AI-powered emergency operations and situational awareness platform. It provides real-time mission control, incident management, resource tracking, and predictive capabilities designed for mass-scale events like the Mahakumbh.
 
 ---
 
 ## 🎯 Overview
 
-Trinetra-AI unifies field communications, crowd management analytics, and automated response protocols into a single, high-density professional dashboard. It enables emergency operators to monitor risk distributions, predict escalations, and issue multilingual public broadcasts instantly.
+Trinetra AI unifies field communications, crowd management analytics, and automated response protocols into a single, high-density professional dashboard. It enables emergency operators to monitor risk distributions, predict escalations, and issue multilingual public broadcasts instantly.
 
 ---
 
 ## ✨ Features
 
 - **Mission Control Dashboard**: Real-time KPI tracking, interactive zone heat maps, and live incident feeds.
-- **Memory AI Core**: Predictive modeling that leverages historical cases to anticipate crowd movements and operational risks.
+- **Emergency Memory AI**: Predictive modeling that leverages historical cases to anticipate crowd movements and operational risks.
 - **Automated Triage**: Natural-language incident reporting with instant AI classification and severity scoring.
 - **Multilingual Broadcasting**: One-click generation and deployment of AI-drafted emergency alerts across various languages and digital signage channels.
 - **Resource Management**: Live tracking of medical, security, and infrastructure response units.
@@ -23,7 +25,7 @@ Trinetra-AI unifies field communications, crowd management analytics, and automa
 
 ## 🏗️ Architecture
 
-Trinetra-AI is built on a modern full-stack monorepo architecture:
+Trinetra AI is built on a modern full-stack monorepo architecture:
 
 ### Frontend
 - **Framework**: React 18 + Vite
@@ -80,12 +82,6 @@ Trinetra-AI is built on a modern full-stack monorepo architecture:
 
 ---
 
-## 📸 Screenshots
-
-*(Add screenshots of the Dashboard, Incident Management, Memory AI, and Settings pages here in the `/docs/screenshots/` folder).*
-
----
-
 ## 🌍 Deployment Strategy
 
 The project structure is natively prepared for decoupled deployment:
@@ -99,5 +95,5 @@ The project structure is natively prepared for decoupled deployment:
 ## 🔮 Future Scope
 
 - **Live WebSocket Feeds**: Transition from mock data to real-time socket connections for incidents and telemetry.
-- **Generative AI Integration**: Hook up the Memory AI core to LLM providers (e.g., Gemini) for dynamic case-resolution generation.
+- **Generative AI Integration**: Hook up the Emergency Memory AI to LLM providers (e.g., Gemini) for dynamic case-resolution generation.
 - **Auth & RBAC**: Implement multi-tier role-based access control (Operator, Commander, Admin) using Supabase Auth.

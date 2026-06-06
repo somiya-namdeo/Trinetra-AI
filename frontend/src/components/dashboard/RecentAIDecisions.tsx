@@ -8,7 +8,7 @@ const RecentAIDecisions = () => {
       <div className="p-4 border-b border-cardBorder">
         <h3 className="font-bold text-white">Recent AI Decisions</h3>
       </div>
-      <div className="p-4 flex-1 overflow-y-auto space-y-3">
+      <div className="p-4 flex flex-col gap-3 flex-1 justify-center">
         {recentAIDecisions.map((decision) => (
           <div key={decision.id} className="p-3 border border-cardBorder bg-card/60 rounded-lg">
             <div className="flex justify-between items-start mb-2">

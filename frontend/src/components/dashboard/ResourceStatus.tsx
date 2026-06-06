@@ -7,7 +7,7 @@ const ResourceStatus = () => {
       <div className="p-4 border-b border-cardBorder">
         <h3 className="font-bold text-white">Resource Status</h3>
       </div>
-      <div className="p-4 space-y-4 flex-1 overflow-y-auto">
+      <div className="p-4 flex flex-col gap-4 flex-1 justify-center">
         {resourceStats.map((stat, idx) => {
           const percentage = Math.round((stat.available / stat.total) * 100);
           return (

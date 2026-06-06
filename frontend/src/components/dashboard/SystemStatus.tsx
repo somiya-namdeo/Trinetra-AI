@@ -3,13 +3,13 @@ import { Server, Activity, Users, Shield, Cpu, Database } from 'lucide-react';
 
 const SystemStatus = () => {
   return (
-    <div className="glass-card flex flex-col h-full min-h-[300px]">
+    <div className="glass-card flex flex-col">
       <div className="p-4 border-b border-cardBorder">
         <h3 className="font-bold text-white flex items-center gap-2">
           <Server size={16} className="text-primary" /> System Status
         </h3>
       </div>
-      <div className="p-4 flex-1 flex flex-col gap-4">
+      <div className="p-4 flex flex-col gap-4">
         
         {/* Agent Status */}
         <div>
@@ -55,7 +55,7 @@ const SystemStatus = () => {
         </div>
 
         {/* Database / Network */}
-        <div className="mt-auto pt-4 border-t border-cardBorder">
+        <div className="mt-2 pt-4 border-t border-cardBorder">
           <div className="flex justify-between items-center text-xs text-gray-400">
              <div className="flex items-center gap-1.5"><Activity size={12} /> Network Load</div>
              <span className="text-primary font-mono">34%</span>

@@ -14,7 +14,7 @@ const QuickActions = () => {
       <div className="p-4 border-b border-cardBorder">
         <h3 className="font-bold text-white">Quick Actions</h3>
       </div>
-      <div className="p-4 grid grid-cols-2 gap-3">
+      <div className="p-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
         {actions.map((action, idx) => (
           <button 
             key={idx} 
