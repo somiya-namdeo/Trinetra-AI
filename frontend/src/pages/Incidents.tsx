@@ -1,22 +1,37 @@
 import React, { useState } from 'react';
 import { Send, Loader2, BrainCircuit, Activity, ShieldAlert, HeartPulse, LocateFixed, Clock, CheckCircle2 } from 'lucide-react';
 import { activeIncidents } from '../data/incidents';
+import { analyzeIncident } from '../services/api';
 
 const Incidents = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [isDispatched, setIsDispatched] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [analysisData, setAnalysisData] = useState<any>(null);
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     setIsAnalyzing(true);
     setShowAnalysis(false);
     setIsDispatched(false);
     
-    setTimeout(() => {
-      setIsAnalyzing(false);
-      setShowAnalysis(true);
-    }, 1500);
+    const ta = document.getElementById('incident-textarea') as HTMLTextAreaElement;
+    const report = ta ? ta.value : "Elderly person collapsed near Gate 7. Crowd gathering.";
+    
+    const data = await analyzeIncident(report);
+    
+    setAnalysisData(data || {
+      category: "Medical Emergency",
+      location: "Gate 7",
+      severity: "High",
+      priority_score: 87,
+      recommended_resources: ["Ambulance A2", "Medical Team Bravo", "Security Unit S1"],
+      recommended_action: "Clear the crowd, dispatch medical team, and secure the area.",
+      estimated_response_time: "4 minutes"
+    });
+
+    setIsAnalyzing(false);
+    setShowAnalysis(true);
   };
 
   const handleDispatch = () => {
@@ -130,17 +145,17 @@ const Incidents = () => {
             {/* Top Metrics Row */}
             <div className="grid grid-cols-3 gap-4 mb-6">
               <div className="bg-card/60 border border-cardBorder rounded-lg p-4">
-                <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Type</p>
-                <p className="font-bold text-white text-sm">Medical Emergency · Elderly Distress</p>
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Type & Location</p>
+                <p className="font-bold text-white text-sm">{analysisData?.category || 'Medical Emergency'} · {analysisData?.location || 'Gate 7'}</p>
               </div>
               <div className="bg-card/60 border border-cardBorder rounded-lg p-4">
                 <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Severity</p>
-                <div className="inline-block mt-1"><span className="badge-high">HIGH</span></div>
+                <div className="inline-block mt-1"><span className={`badge-${(analysisData?.severity || 'HIGH').toLowerCase()}`}>{(analysisData?.severity || 'HIGH').toUpperCase()}</span></div>
               </div>
               <div className="bg-card/60 border border-cardBorder rounded-lg p-4">
                 <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Priority Score</p>
                 <div className="flex items-end gap-1">
-                  <span className="text-3xl font-bold text-warning leading-none">87</span>
+                  <span className="text-3xl font-bold text-warning leading-none">{analysisData?.priority_score || 87}</span>
                   <span className="text-xs text-gray-500 mb-1">/100</span>
                 </div>
               </div>
@@ -150,27 +165,41 @@ const Incidents = () => {
             <div className="mb-6">
               <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-3">Recommended Resources</p>
               <div className="grid grid-cols-3 gap-4">
-                <div className="bg-card/60 border border-cardBorder rounded-lg p-3 flex items-center gap-3">
-                  <div className="bg-primary/20 p-2 rounded text-primary"><HeartPulse size={16} /></div>
-                  <div>
-                    <p className="text-sm font-bold text-white">Ambulance 02</p>
-                    <p className="text-[10px] text-gray-400">ETA 3 min</p>
+                {analysisData?.recommended_resources?.map((res: string, idx: number) => (
+                  <div key={idx} className="bg-card/60 border border-cardBorder rounded-lg p-3 flex items-center gap-3">
+                    <div className="bg-primary/20 p-2 rounded text-primary">
+                      {res.toLowerCase().includes('ambulance') ? <HeartPulse size={16} /> : res.toLowerCase().includes('medical') ? <Activity size={16} /> : <ShieldAlert size={16} />}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-white">{res}</p>
+                      <p className="text-[10px] text-gray-400">{idx === 0 ? `ETA ${analysisData?.estimated_response_time || '3 min'}` : 'On standby'}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="bg-card/60 border border-cardBorder rounded-lg p-3 flex items-center gap-3">
-                  <div className="bg-primary/20 p-2 rounded text-primary"><Activity size={16} /></div>
-                  <div>
-                    <p className="text-sm font-bold text-white">Medical Team Bravo</p>
-                    <p className="text-[10px] text-gray-400">Closest unit · 180m</p>
-                  </div>
-                </div>
-                <div className="bg-card/60 border border-cardBorder rounded-lg p-3 flex items-center gap-3">
-                  <div className="bg-primary/20 p-2 rounded text-primary"><ShieldAlert size={16} /></div>
-                  <div>
-                    <p className="text-sm font-bold text-white">Security Unit 02</p>
-                    <p className="text-[10px] text-gray-400">Crowd control</p>
-                  </div>
-                </div>
+                )) || (
+                  <>
+                    <div className="bg-card/60 border border-cardBorder rounded-lg p-3 flex items-center gap-3">
+                      <div className="bg-primary/20 p-2 rounded text-primary"><HeartPulse size={16} /></div>
+                      <div>
+                        <p className="text-sm font-bold text-white">Ambulance 02</p>
+                        <p className="text-[10px] text-gray-400">ETA 3 min</p>
+                      </div>
+                    </div>
+                    <div className="bg-card/60 border border-cardBorder rounded-lg p-3 flex items-center gap-3">
+                      <div className="bg-primary/20 p-2 rounded text-primary"><Activity size={16} /></div>
+                      <div>
+                        <p className="text-sm font-bold text-white">Medical Team Bravo</p>
+                        <p className="text-[10px] text-gray-400">Closest unit · 180m</p>
+                      </div>
+                    </div>
+                    <div className="bg-card/60 border border-cardBorder rounded-lg p-3 flex items-center gap-3">
+                      <div className="bg-primary/20 p-2 rounded text-primary"><ShieldAlert size={16} /></div>
+                      <div>
+                        <p className="text-sm font-bold text-white">Security Unit 02</p>
+                        <p className="text-[10px] text-gray-400">Crowd control</p>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -179,19 +208,28 @@ const Incidents = () => {
               <div className="flex-1">
                 <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-3">Suggested Actions</p>
                 <div className="space-y-3">
-                  {[
-                    "Clear a 4m radius around the victim immediately.",
-                    "Dispatch nearest ambulance via service road E-2 (bypasses crowd).",
-                    "Activate PA at Gate 7: redirect inbound traffic to Gate 6.",
-                    "Notify on-site cardiologist (Dr. Mehta) — patient profile suggests cardiac risk."
-                  ].map((action, i) => (
-                    <div key={i} className="flex items-start gap-3">
+                  {analysisData?.recommended_action ? (
+                    <div className="flex items-start gap-3">
                       <div className="bg-primary/20 text-primary w-5 h-5 rounded flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
-                        {i + 1}
+                        1
                       </div>
-                      <p className="text-sm text-gray-200">{action}</p>
+                      <p className="text-sm text-gray-200">{analysisData.recommended_action}</p>
                     </div>
-                  ))}
+                  ) : (
+                    [
+                      "Clear a 4m radius around the victim immediately.",
+                      "Dispatch nearest ambulance via service road E-2 (bypasses crowd).",
+                      "Activate PA at Gate 7: redirect inbound traffic to Gate 6.",
+                      "Notify on-site cardiologist (Dr. Mehta) — patient profile suggests cardiac risk."
+                    ].map((action, i) => (
+                      <div key={i} className="flex items-start gap-3">
+                        <div className="bg-primary/20 text-primary w-5 h-5 rounded flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                          {i + 1}
+                        </div>
+                        <p className="text-sm text-gray-200">{action}</p>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
               

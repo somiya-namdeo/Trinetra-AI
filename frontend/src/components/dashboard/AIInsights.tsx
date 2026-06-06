@@ -1,8 +1,29 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrainCircuit, Zap } from 'lucide-react';
 import { aiPredictions } from '../../data/predictions';
+import { getMemoryInsight } from '../../services/api';
 
 const AIInsights = () => {
+  const [predictions, setPredictions] = useState<any[]>(aiPredictions);
+
+  useEffect(() => {
+    const fetchInsight = async () => {
+      const data = await getMemoryInsight();
+      if (data && data.pattern_detected) {
+        setPredictions([{
+          id: 'backend-insight',
+          title: data.pattern_detected,
+          description: data.reasoning_trace?.[0] || 'Correlated live metrics point to escalation.',
+          severity: 'HIGH',
+          eta: data.predicted_escalation || '8-12m',
+          confidence: data.confidence || 87,
+          recommendations: data.preventive_actions || ['Deploy additional resources']
+        }, ...aiPredictions.slice(1)]); // replace first one with real backend data
+      }
+    };
+    fetchInsight();
+  }, []);
+
   return (
     <div className="glass-card flex flex-col h-full">
       <div className="p-4 border-b border-cardBorder flex justify-between items-center">
@@ -18,7 +39,7 @@ const AIInsights = () => {
       </div>
       
       <div className="p-4 space-y-4 flex-1">
-        {aiPredictions.map((pred, i) => (
+        {predictions.map((pred) => (
           <div key={pred.id} className="bg-card border border-cardBorder rounded-lg p-4">
             <div className="flex gap-3 mb-3">
               <div className="mt-1 text-primary">
@@ -48,7 +69,7 @@ const AIInsights = () => {
                 </div>
 
                 <div className="space-y-1">
-                  {pred.recommendations.map((rec, j) => (
+                  {pred.recommendations.map((rec: string, j: number) => (
                     <div key={j} className="text-xs text-gray-300 flex items-center gap-2">
                       <Zap size={12} className="text-warning" />
                       {rec}

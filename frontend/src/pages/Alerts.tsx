@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { Copy, Radio, Volume2, MessageSquare, Smartphone, Monitor, CheckCircle2, Sparkles, CheckSquare } from 'lucide-react';
+import { Copy, Radio, Volume2, MessageSquare, Smartphone, Monitor, CheckCircle2, Sparkles, CheckSquare, Loader2 } from 'lucide-react';
+import { generateAlert } from '../services/api';
 
 const Alerts = () => {
   const [copied, setCopied] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [alertData, setAlertData] = useState<{ english: string, hindi: string } | null>(null);
 
   const handleCopy = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
@@ -10,8 +13,19 @@ const Alerts = () => {
     setTimeout(() => setCopied(null), 2000);
   };
 
-  const englishAlert = "URGENT — ZONE A NOTICE: Due to a temporary water-supply issue and rising temperatures, please move to shaded rest areas in Zone B or Zone C. Free hydration is available at stations B-12 and C-04. Medical staff are on site. Stay calm and follow steward instructions.";
-  const hindiAlert = "तत्काल सूचना — ज़ोन ए: पानी की अस्थायी समस्या और बढ़ते तापमान के कारण, कृपया ज़ोन बी या ज़ोन सी के छायादार विश्राम क्षेत्रों में जाएं। B-12 और C-04 स्टेशनों पर निःशुल्क पेयजल उपलब्ध है। चिकित्सा दल मौके पर मौजूद है। शांत रहें और स्वयंसेवकों के निर्देशों का पालन करें।";
+  const handleGenerate = async () => {
+    setIsGenerating(true);
+    const data = await generateAlert({
+      incident_type: "Heat Stress Cluster",
+      location: "Zone A",
+      severity: "Critical"
+    });
+    if (data) setAlertData(data);
+    setIsGenerating(false);
+  };
+
+  const englishAlert = alertData?.english || "URGENT — ZONE A NOTICE: Due to a temporary water-supply issue and rising temperatures, please move to shaded rest areas in Zone B or Zone C. Free hydration is available at stations B-12 and C-04. Medical staff are on site. Stay calm and follow steward instructions.";
+  const hindiAlert = alertData?.hindi || "तत्काल सूचना — ज़ोन ए: पानी की अस्थायी समस्या और बढ़ते तापमान के कारण, कृपया ज़ोन बी या ज़ोन सी के छायादार विश्राम क्षेत्रों में जाएं। B-12 और C-04 स्टेशनों पर निःशुल्क पेयजल उपलब्ध है। चिकित्सा दल मौके पर मौजूद है। शांत रहें और स्वयंसेवकों के निर्देशों का पालन करें।";
 
   return (
     <div className="flex flex-col gap-6 pb-10">
@@ -23,9 +37,18 @@ const Alerts = () => {
           <p className="text-sm text-gray-400">AI-drafted multilingual announcements ready for broadcast.</p>
         </div>
         <div>
-          <div className="bg-primary/10 border border-primary/30 px-3 py-1.5 rounded-lg flex items-center gap-2">
-            <Sparkles size={14} className="text-primary" />
-            <span className="text-xs font-medium text-primary">Generated for INC-2041 · Heat Stress Cluster</span>
+          <div className="flex gap-3 items-center">
+            <div className="bg-primary/10 border border-primary/30 px-3 py-1.5 rounded-lg flex items-center gap-2">
+              <Sparkles size={14} className="text-primary" />
+              <span className="text-xs font-medium text-primary">Generated for INC-2041 · Heat Stress Cluster</span>
+            </div>
+            <button 
+              onClick={handleGenerate}
+              disabled={isGenerating}
+              className="bg-primary hover:bg-primary/90 text-white font-bold py-1.5 px-4 rounded-lg transition-colors flex items-center gap-2 text-xs shadow-[0_0_10px_rgba(14,165,233,0.3)] disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {isGenerating ? <><Loader2 size={14} className="animate-spin" /> Generating...</> : <><Sparkles size={14} /> Generate AI Alert</>}
+            </button>
           </div>
         </div>
       </div>

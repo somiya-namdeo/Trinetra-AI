@@ -1,7 +1,18 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrainCircuit, Network, Activity, ShieldAlert, HeartPulse, MessageSquareWarning, Zap, ArrowRight, AlertTriangle, Droplet, Users, Clock, CheckCircle2, Search, Database, LocateFixed, GitCommit } from 'lucide-react';
+import { getMemoryInsight } from '../services/api';
 
 const MemoryAI = () => {
+  const [insightData, setInsightData] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchInsight = async () => {
+      const data = await getMemoryInsight();
+      if (data) setInsightData(data);
+    };
+    fetchInsight();
+  }, []);
+
   return (
     <div className="flex flex-col gap-6 pb-10">
       
@@ -154,11 +165,11 @@ const MemoryAI = () => {
           <div className="glass-card p-5 border-l-2 border-l-warning">
             <div className="flex items-center gap-3 mb-3">
               <div className="bg-warning/20 p-2 rounded text-warning"><HeartPulse size={16} /></div>
-              <h3 className="font-bold text-white text-sm">Repeated Medical Incidents</h3>
+              <h3 className="font-bold text-white text-sm">{insightData?.pattern_detected || 'Repeated Medical Incidents'}</h3>
             </div>
             <div className="bg-black/30 rounded p-3 text-sm text-gray-300 border border-white/5">
               <span className="text-warning font-bold text-[10px] uppercase tracking-widest block mb-1">AI Discovered:</span>
-              32% increase in elderly distress events between 14:00–16:00 near Gate 7.
+              {insightData?.reasoning_trace?.[0] || '32% increase in elderly distress events between 14:00–16:00 near Gate 7.'}
             </div>
           </div>
           
@@ -248,12 +259,12 @@ const MemoryAI = () => {
             <CheckCircle2 size={16} className="text-primary" /> Memory AI Recommendations
           </h2>
           <div className="space-y-3">
-            {[
+            {(insightData?.preventive_actions || [
               "Deploy additional hydration unit to Zone A.",
               "Open auxiliary gate at North Gate.",
               "Increase medical staffing by 2 units.",
               "Broadcast crowd diversion advisory."
-            ].map((action, i) => (
+            ]).map((action: string, i: number) => (
               <div key={i} className="bg-card/40 border border-cardBorder p-3 rounded-lg flex items-center gap-3 hover:bg-card/80 transition-colors">
                 <div className="bg-primary/10 border border-primary/20 text-primary w-6 h-6 rounded flex items-center justify-center text-xs font-bold shrink-0">
                   {i + 1}

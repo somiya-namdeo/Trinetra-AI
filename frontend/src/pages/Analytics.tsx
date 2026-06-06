@@ -52,12 +52,12 @@ const Analytics = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* ROW 1: Incident Trends (Span 2) */}
-        <div className="glass-card p-5 lg:col-span-2 flex flex-col">
+        <div className="glass-card p-5 lg:col-span-2 flex flex-col w-full min-w-0">
           <div className="mb-4">
             <h2 className="font-bold text-white text-sm">Incident Trends</h2>
             <p className="text-[10px] text-gray-400">Last 12 hours</p>
           </div>
-          <div className="flex-1 min-h-[260px] w-full">
+          <div className="w-full h-[320px] min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={trendData} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
                 <defs>
@@ -86,12 +86,12 @@ const Analytics = () => {
         </div>
 
         {/* ROW 1: Risk Distribution (Span 1) */}
-        <div className="glass-card p-5 lg:col-span-1 flex flex-col">
+        <div className="glass-card p-5 lg:col-span-1 flex flex-col w-full min-w-0">
           <div className="mb-3">
             <h2 className="font-bold text-white text-sm">Risk Distribution</h2>
             <p className="text-[10px] text-gray-400">Active incidents by severity</p>
           </div>
-          <div className="flex-1 min-h-[220px] flex items-center justify-center relative">
+          <div className="w-full h-[250px] min-w-0 flex items-center justify-center relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -134,12 +134,12 @@ const Analytics = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* ROW 2: Resource Utilization (Span 2) */}
-        <div className="glass-card p-5 lg:col-span-2 flex flex-col">
+        <div className="glass-card p-5 lg:col-span-2 flex flex-col w-full min-w-0">
           <div className="mb-4">
             <h2 className="font-bold text-white text-sm">Resource Utilization</h2>
             <p className="text-[10px] text-gray-400">Deployed vs available</p>
           </div>
-          <div className="flex-1 min-h-[240px] w-full">
+          <div className="w-full h-[320px] min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={resourceData} margin={{ top: 10, right: 20, left: -20, bottom: -5 }} barSize={50}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" vertical={false} />

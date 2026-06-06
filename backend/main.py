@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from routes.api import router as api_router
 
 app = FastAPI(
     title="Trinetra-AI Backend",
@@ -10,12 +11,20 @@ app = FastAPI(
 # Configure CORS for frontend access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins, adjust for production
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+app.include_router(api_router, prefix="/api")
+
 @app.get("/")
 def read_root():
-    return {"status": "ok", "message": "Trinetra-AI Backend is running"}
+    return {
+        "message": "Trinetra AI API is running",
+        "status": "healthy"
+    }

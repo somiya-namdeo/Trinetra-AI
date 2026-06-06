@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Network, Zap, Truck, ShieldAlert, HeartPulse, Shield, Thermometer, Loader2, CheckCircle2, TrendingUp, AlertTriangle, ArrowRight } from 'lucide-react';
+import { getResources } from '../services/api';
 
 const Resources = () => {
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -8,6 +9,29 @@ const Resources = () => {
   
   // Track assigned state for individual actions/resources
   const [assignedResources, setAssignedResources] = useState<Record<string, boolean>>({});
+  const [fieldUnits, setFieldUnits] = useState<any[]>([
+    { id: 'u1', name: 'Ambulance 01', type: 'AMB-01', status: 'Deployed', location: 'Gate 7', eta: 'On site', assignment: 'INC-2840', fit: 82, isRecommended: false },
+    { id: 'u2', name: 'Ambulance 02', type: 'AMB-02', status: 'Available', location: 'Base', eta: '3 min', assignment: 'None', fit: 96, isRecommended: true, recommendFor: 'Elderly collapse near Gate 7' },
+    { id: 'u3', name: 'Medical Team Alpha', type: 'MED-01', status: 'Deployed', location: 'Zone A', eta: 'On site', assignment: 'INC-2841', fit: 75, isRecommended: false },
+    { id: 'u4', name: 'Medical Team Bravo', type: 'MED-02', status: 'Available', location: 'Zone B', eta: '4 min', assignment: 'None', fit: 94, isRecommended: true, recommendFor: 'Heat Stress Cluster — Zone A' },
+    { id: 'u5', name: 'Security Unit 01', type: 'SEC-01', status: 'Deployed', location: 'North Gate', eta: 'On site', assignment: 'INC-2838', fit: 88, isRecommended: false },
+    { id: 'u6', name: 'Security Unit 02', type: 'SEC-02', status: 'Available', location: 'Gate 7', eta: '2 min', assignment: 'None', fit: 91, isRecommended: true, recommendFor: 'Minor crowd surge near Gate 3' },
+  ]);
+
+  useEffect(() => {
+    const fetchResources = async () => {
+      const data = await getResources();
+      if (data && Array.isArray(data) && data.length > 0) {
+        // Merge backend data with existing mock fields for the demo (like assignment, fit, isRecommended)
+        const mappedData = data.map((unit: any, idx: number) => {
+           const fallbackUnit = fieldUnits[idx] || {};
+           return { ...fallbackUnit, ...unit };
+        });
+        setFieldUnits(mappedData);
+      }
+    };
+    fetchResources();
+  }, []);
 
   const handleOptimize = () => {
     setIsOptimizing(true);
@@ -43,14 +67,7 @@ const Resources = () => {
     { id: 'dp4', action: 'Keep Fire Unit 01 on standby', priority: 'Low', impact: 'Low', effort: 'None' }
   ];
 
-  const fieldUnits = [
-    { id: 'u1', name: 'Ambulance 01', type: 'AMB-01', status: 'Deployed', location: 'Gate 7', eta: 'On site', assignment: 'INC-2840', fit: 82, isRecommended: false },
-    { id: 'u2', name: 'Ambulance 02', type: 'AMB-02', status: 'Available', location: 'Base', eta: '3 min', assignment: 'None', fit: 96, isRecommended: true, recommendFor: 'Elderly collapse near Gate 7' },
-    { id: 'u3', name: 'Medical Team Alpha', type: 'MED-01', status: 'Deployed', location: 'Zone A', eta: 'On site', assignment: 'INC-2841', fit: 75, isRecommended: false },
-    { id: 'u4', name: 'Medical Team Bravo', type: 'MED-02', status: 'Available', location: 'Zone B', eta: '4 min', assignment: 'None', fit: 94, isRecommended: true, recommendFor: 'Heat Stress Cluster — Zone A' },
-    { id: 'u5', name: 'Security Unit 01', type: 'SEC-01', status: 'Deployed', location: 'North Gate', eta: 'On site', assignment: 'INC-2838', fit: 88, isRecommended: false },
-    { id: 'u6', name: 'Security Unit 02', type: 'SEC-02', status: 'Available', location: 'Gate 7', eta: '2 min', assignment: 'None', fit: 91, isRecommended: true, recommendFor: 'Minor crowd surge near Gate 3' },
-  ];
+
 
   return (
     <div className="flex flex-col space-y-6 h-full pb-10 relative">
