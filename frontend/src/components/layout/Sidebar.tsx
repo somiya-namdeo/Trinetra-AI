@@ -20,7 +20,11 @@ const Sidebar = () => {
   return (
     <div className={`bg-card h-screen flex flex-col border-r border-cardBorder transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
       {/* Logo */}
-      <div className={`p-6 flex items-center ${isCollapsed ? 'justify-center px-0' : 'gap-3'} h-[88px]`}>
+      <div 
+        onClick={() => navigate('/')}
+        className={`p-6 flex items-center ${isCollapsed ? 'justify-center px-0' : 'gap-3'} h-[88px] cursor-pointer hover:opacity-80 transition-opacity`}
+        title="Return to Landing Page"
+      >
         <div className="bg-primary/20 p-2 rounded-lg text-primary shrink-0">
           <Shield size={24} />
         </div>

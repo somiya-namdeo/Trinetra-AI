@@ -89,7 +89,7 @@ const LandingPage = () => {
             <span className="text-sm text-gray-300 font-semibold tracking-wide">Built for Mass Gathering Emergency Intelligence</span>
           </div>
           
-          <h1 className="text-6xl md:text-8xl font-black text-white mb-6 tracking-tight leading-none drop-shadow-lg">
+          <h1 className="text-5xl md:text-7xl font-black text-white mb-6 tracking-tight leading-none drop-shadow-lg">
             AI-Powered <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 drop-shadow-[0_0_20px_rgba(14,165,233,0.4)]">
               Emergency Intelligence
