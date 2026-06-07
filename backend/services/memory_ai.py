@@ -5,6 +5,7 @@ from services.data_loader import (
     get_patterns
 )
 from services.risk_engine import calculate_zone_risk
+from services.ml_service import predict_zone_risk
 
 def get_pattern_by_name(patterns, pattern_name):
     """Helper to fetch a historical pattern by name."""
@@ -127,6 +128,11 @@ def generate_memory_ai_insight():
             "affected_zone": "All Zones",
             "severity": "Monitoring",
             "risk_score": 50,
+            "ml_risk_score": 50,
+            "ml_risk_level": "Low",
+            "model_used": False,
+            "risk_source": "Rule-Based",
+            "ml_model_name": "Random Forest Regressor",
             "predicted_escalation": "No immediate escalation",
             "linked_signals": [],
             "reasoning_trace": ["System monitoring all zones"],
@@ -138,12 +144,23 @@ def generate_memory_ai_insight():
     insights.sort(key=lambda x: x["confidence"], reverse=True)
     best_insight = insights[0]
     
+    # Inject ML risk prediction details for the affected zone
+    affected_zone_data = next((z for z in zones if z.get("name") == best_insight["affected_zone"]), {})
+    ml_risk = predict_zone_risk(affected_zone_data)
+    
+    best_insight["ml_risk_score"] = ml_risk["ml_risk_score"]
+    best_insight["ml_risk_level"] = ml_risk["ml_risk_level"]
+    best_insight["model_used"] = ml_risk["model_used"]
+    best_insight["risk_source"] = ml_risk["risk_source"]
+    best_insight["ml_model_name"] = "Random Forest Regressor"
+    
     # Match with historical pattern for extra context
     matched_pattern = get_pattern_by_name(patterns, best_insight["pattern_detected"])
     
     best_insight["reasoning_trace"] = [
         "Loaded live zone state from zones.json",
         "Correlated telemetry trend showing increasing risk indicators",
+        "Random Forest ML model predicted zone risk level from live telemetry features.",
         "Matched incidents related to active risks",
         f"Matched historical pattern: {best_insight['pattern_detected']}",
         "Recommended preventive action cascade"

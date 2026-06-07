@@ -13,35 +13,64 @@ if GEMINI_API_KEY:
 else:
     model = None
 
+def extract_location(report_lower: str) -> str:
+    if "gate 3" in report_lower: return "Gate 3"
+    if "gate 4" in report_lower: return "Gate 4"
+    if "gate 7" in report_lower: return "Gate 7"
+    if "zone a" in report_lower: return "Zone A"
+    if "food court" in report_lower: return "Food Court"
+    if "north gate" in report_lower: return "North Gate"
+    return "Unknown Sector"
+
 def get_mock_incident_analysis(report: str = ""):
     report_lower = report.lower()
+    loc = extract_location(report_lower)
     
-    if any(word in report_lower for word in ["water", "पानी", "station", "supply", "unavailable", "depleted"]):
+    # Medical keywords (High priority)
+    medical_keywords = ["collapsed", "unconscious", "medical", "fainted", "breathing", "heart", "injury", "bleeding", "elderly", "not responding", "patient", "heat stroke"]
+    if any(word in report_lower for word in medical_keywords):
         return {
-            "category": "Water Supply Failure",
-            "location": "Station 2" if "station 2" in report_lower else "Unknown Water Station",
+            "category": "Medical Emergency",
+            "location": loc,
             "severity": "High",
-            "priority_score": 82,
-            "recommended_resources": ["Water Supply Unit", "Volunteer Team", "Security Unit"],
-            "recommended_action": "Deploy backup water supply, guide crowd to nearest hydration point, and monitor heat-related symptoms.",
-            "estimated_response_time": "6 minutes"
+            "priority_score": 90,
+            "recommended_resources": ["Ambulance", "Medical Team", "Security Unit"],
+            "recommended_action": "Clear a 4m radius around the victim immediately and dispatch nearest medical unit.",
+            "estimated_response_time": "4 minutes"
         }
-        
-    if any(word in report_lower for word in ["crowd", "rush", "bottleneck", "queue"]):
+
+    # Crowd keywords
+    crowd_keywords = ["shouting", "running", "panic", "stampede", "pushing", "crowd surge", "overcrowding", "heavy crowd", "crowd gathering"]
+    if any(word in report_lower for word in crowd_keywords):
         return {
             "category": "Crowd Surge Risk",
-            "location": "North Gate" if "north gate" in report_lower else "Unknown Sector",
+            "location": loc,
             "severity": "High",
-            "priority_score": 89,
+            "priority_score": 85,
             "recommended_resources": ["Security Unit", "Volunteer Team", "Drone Unit"],
             "recommended_action": "Deploy security to manage crowd flow, open secondary exits, and use PA system to guide visitors.",
             "estimated_response_time": "3 minutes"
         }
-        
-    if any(word in report_lower for word in ["fire", "smoke", "overheating"]):
+
+    # Security keywords
+    security_keywords = ["suspicious", "unattended bag", "bag", "package", "threat", "weapon", "fight", "violence", "security issue"]
+    if any(word in report_lower for word in security_keywords):
+        return {
+            "category": "Security Threat",
+            "location": loc,
+            "severity": "High",
+            "priority_score": 90,
+            "recommended_resources": ["Security Unit", "Drone Unit", "Police Response Team"],
+            "recommended_action": "Secure the area, isolate the suspicious object, notify security command, and redirect nearby crowd flow.",
+            "estimated_response_time": "3 minutes"
+        }
+    
+    # Fire keywords
+    fire_keywords = ["fire", "smoke", "burning", "flames", "explosion"]
+    if any(word in report_lower for word in fire_keywords):
         return {
             "category": "Fire Hazard",
-            "location": "Food Court" if "food court" in report_lower else "Unknown Sector",
+            "location": loc,
             "severity": "Critical",
             "priority_score": 95,
             "recommended_resources": ["Fire Unit", "Medical Team", "Security Unit"],
@@ -49,25 +78,39 @@ def get_mock_incident_analysis(report: str = ""):
             "estimated_response_time": "2 minutes"
         }
         
-    if any(word in report_lower for word in ["lost child", "missing"]):
+    # Lost Person keywords
+    lost_keywords = ["child lost", "lost child", "missing child", "child missing", "separated child"]
+    if any(word in report_lower for word in lost_keywords):
         return {
-            "category": "Lost Child",
-            "location": "Zone C" if "zone c" in report_lower else "Unknown Sector",
-            "severity": "Medium",
-            "priority_score": 75,
-            "recommended_resources": ["Security Unit", "Volunteer Team"],
-            "recommended_action": "Broadcast description to all ground units, secure exit gates, and escort parents to control room.",
+            "category": "Lost Person",
+            "location": loc,
+            "severity": "High",
+            "priority_score": 80,
+            "recommended_resources": ["Volunteer Team", "Child Recovery Unit", "Security Unit"],
+            "recommended_action": "Activate child reunification protocol and notify nearby volunteers.",
             "estimated_response_time": "4 minutes"
+        }
+
+    # Water failure (existing fallback)
+    if any(word in report_lower for word in ["water", "पानी", "station", "supply", "unavailable", "depleted"]):
+        return {
+            "category": "Water Supply Failure",
+            "location": loc,
+            "severity": "High",
+            "priority_score": 82,
+            "recommended_resources": ["Water Supply Unit", "Volunteer Team", "Security Unit"],
+            "recommended_action": "Deploy backup water supply, guide crowd to nearest hydration point, and monitor heat-related symptoms.",
+            "estimated_response_time": "6 minutes"
         }
         
     return {
-        "category": "Medical Emergency",
-        "location": "Gate 7",
-        "severity": "High",
-        "priority_score": 87,
-        "recommended_resources": ["Ambulance A2", "Medical Team Bravo", "Security Unit S1"],
-        "recommended_action": "Clear the crowd, dispatch medical team, and secure the area.",
-        "estimated_response_time": "4 minutes"
+        "category": "General Incident",
+        "location": loc,
+        "severity": "Medium",
+        "priority_score": 50,
+        "recommended_resources": ["Security Unit", "Volunteer Team"],
+        "recommended_action": "Investigate the reported incident and provide updates to the command center.",
+        "estimated_response_time": "5 minutes"
     }
 
 def get_mock_alert_generation(incident_type: str, location: str, severity: str):
@@ -99,9 +142,42 @@ def get_mock_alert_generation(incident_type: str, location: str, severity: str):
         "hindi": f"ध्यान दें: {location} के पास भारी भीड़ है। कृपया पूर्वी प्रवेश द्वार या गेट 4B का उपयोग करें।"
     }
 
+def post_process_incident(result, report: str):
+    report_lower = report.lower()
+    
+    # Priority Score Logic for Medical Emergency
+    if result.get("category") == "Medical Emergency":
+        score = 80
+        if any(w in report_lower for w in ["unconscious", "not responding", "collapsed", "fainted"]):
+            score += 10
+        if any(w in report_lower for w in ["elderly", "child", "pregnant", "injured"]):
+            score += 5
+        if any(w in report_lower for w in ["crowd", "gathering", "rush", "panic"]):
+            score += 5
+            
+        loc_lower = str(result.get("location", "")).lower()
+        if any(w in loc_lower for w in ["gate", "main corridor", "food court", "riverfront"]):
+            score += 5
+            
+        score = min(100, score)
+        result["priority_score"] = score
+
+    # Severity Mapping for all incidents
+    score = result.get("priority_score", 50)
+    if score >= 85:
+        result["severity"] = "Critical"
+    elif score >= 70:
+        result["severity"] = "High"
+    elif score >= 50:
+        result["severity"] = "Medium"
+    else:
+        result["severity"] = "Low"
+        
+    return result
+
 def analyze_incident(report: str):
     if not model:
-        return get_mock_incident_analysis(report)
+        return post_process_incident(get_mock_incident_analysis(report), report)
     
     prompt = f"""
     Analyze the following emergency report and extract details into a strictly formatted JSON.
@@ -126,10 +202,10 @@ def analyze_incident(report: str):
             text = text[7:-3]
         elif text.startswith('```'):
             text = text[3:-3]
-        return json.loads(text)
+        return post_process_incident(json.loads(text), report)
     except Exception as e:
         print(f"Gemini API Error: {e}")
-        return get_mock_incident_analysis(report)
+        return post_process_incident(get_mock_incident_analysis(report), report)
 
 def generate_alerts(incident_type: str, location: str, severity: str):
     if not model:

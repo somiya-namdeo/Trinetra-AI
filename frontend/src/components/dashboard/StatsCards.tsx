@@ -16,12 +16,12 @@ const StatsCards = ({ data }: { data?: any }) => {
     {
       title: 'ACTIVE INCIDENTS',
       value: safeData.activeIncidents,
-      subtext: 'vs last hour',
-      trend: '+3',
+      subtext: `of ${safeData.totalIncidents} Total Today`,
+      trend: `${safeData.resolvedIncidents} Resolved Today`,
       icon: AlertTriangle,
       color: 'text-warning',
       badge: 'bg-warning/20 border-warning/30',
-      trendColor: 'text-critical'
+      trendColor: 'text-safe'
     },
     {
       title: 'CRITICAL ZONES',
@@ -44,14 +44,14 @@ const StatsCards = ({ data }: { data?: any }) => {
       trendColor: 'text-safe'
     },
     {
-      title: 'OVERALL RISK SCORE',
+      title: safeData.riskSource === 'ML' ? 'OVERALL ML RISK' : 'OVERALL RISK SCORE',
       value: safeData.riskScore,
       subtext: `${safeData.insightSeverity} — monitor ${safeData.insightZone}`,
-      trend: '+8',
+      trend: safeData.riskSource === 'ML' ? 'Source: Random Forest' : 'Rule-Based Fallback',
       icon: Activity,
-      color: 'text-primary',
-      badge: 'bg-primary/20 border-primary/30',
-      trendColor: 'text-critical'
+      color: safeData.riskSource === 'ML' ? 'text-[#8b5cf6]' : 'text-primary',
+      badge: safeData.riskSource === 'ML' ? 'bg-[#8b5cf6]/20 border-[#8b5cf6]/30' : 'bg-primary/20 border-primary/30',
+      trendColor: safeData.riskSource === 'ML' ? 'text-[#8b5cf6] font-mono' : 'text-critical'
     }
   ];
 
@@ -75,7 +75,8 @@ const StatsCards = ({ data }: { data?: any }) => {
               <p className="text-xs text-gray-400">{stat.subtext}</p>
               <div className="flex items-center gap-1 mt-0.5">
                 <span className={`text-xs font-bold ${stat.trendColor}`}>
-                  {stat.trend.startsWith('+') ? '↗' : '↘'} {stat.trend.replace(/[+-]/, '')}
+                  {stat.trend.startsWith('+') ? '↗ ' : stat.trend.startsWith('-') ? '↘ ' : ''} 
+                  {stat.trend.replace(/^[+-]/, '')}
                 </span>
               </div>
             </div>

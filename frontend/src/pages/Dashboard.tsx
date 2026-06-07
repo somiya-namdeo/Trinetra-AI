@@ -3,6 +3,7 @@ import StatsCards from '../components/dashboard/StatsCards';
 import MissionMap from '../components/dashboard/MissionMap';
 import IncidentFeed from '../components/dashboard/IncidentFeed';
 import AIInsights from '../components/dashboard/AIInsights';
+import MLRiskCard from '../components/dashboard/MLRiskCard';
 import QuickActions from '../components/dashboard/QuickActions';
 import ResourceStatus from '../components/dashboard/ResourceStatus';
 import SectorSummary from '../components/dashboard/SectorSummary';
@@ -14,6 +15,7 @@ import SystemStatus from '../components/dashboard/SystemStatus';
 import { getIncidents, getZones, getResources, getMemoryInsight } from '../services/api';
 
 const Dashboard = () => {
+  const [dashboardIncidents, setDashboardIncidents] = useState<any[]>([]);
   const [statsData, setStatsData] = useState({
     activeIncidents: '6',
     criticalZones: '1',
@@ -21,7 +23,9 @@ const Dashboard = () => {
     totalResources: '13',
     riskScore: '72',
     insightZone: 'Zone A',
-    insightSeverity: 'elevated'
+    insightSeverity: 'elevated',
+    totalIncidents: '24',
+    resolvedIncidents: '5'
   });
 
   useEffect(() => {
@@ -33,18 +37,45 @@ const Dashboard = () => {
         getMemoryInsight()
       ]);
 
+      if (incidents && Array.isArray(incidents)) {
+        setDashboardIncidents(incidents);
+      }
+
       setStatsData(prev => {
-        const activeCount = incidents && Array.isArray(incidents) && incidents.length > 0 ? incidents.filter((i: any) => (i.status || 'ACTIVE').toUpperCase() === 'ACTIVE').length.toString() : prev.activeIncidents;
-        const highestRisk = zones && Array.isArray(zones) && zones.length > 0 ? Math.max(...zones.map((z: any) => z.risk_score || 0)).toString() : prev.riskScore;
+        const activeCount = incidents && Array.isArray(incidents) && incidents.length > 0 
+          ? incidents.filter((i: any) => {
+              const s = (i.status || '').toUpperCase();
+              return s !== 'RESOLVED';
+            }).length.toString() 
+          : prev.activeIncidents;
+          
+        const totalIncCount = incidents && Array.isArray(incidents) ? incidents.length.toString() : prev.totalIncidents;
+        const resolvedIncCount = incidents && Array.isArray(incidents) ? incidents.filter((i: any) => (i.status || '').toUpperCase() === 'RESOLVED').length.toString() : prev.resolvedIncidents;
         const availCount = resources && Array.isArray(resources) && resources.length > 0 ? resources.filter((r: any) => r.status === 'Available').length.toString() : prev.availableResources;
         const critZoneCount = zones && Array.isArray(zones) && zones.length > 0 ? zones.filter((z: any) => z.risk_level === 'Critical' || z.risk_score >= 80).length.toString() : prev.criticalZones;
         
-        // Verification step performed here.
-        // console.log("Verified: Active Incidents ->", activeCount);
-        // console.log("Verified: Critical Zones ->", critZoneCount);
-        // console.log("Verified: Available Resources ->", availCount);
-        // console.log("Verified: Highest Risk Score ->", highestRisk);
-        // Logs removed after verification.
+        let highestRisk = prev.riskScore;
+        let bestZoneName = prev.insightZone;
+        let bestZoneSeverity = prev.insightSeverity;
+        let riskSource = 'Rule-Based';
+        
+        if (zones && Array.isArray(zones) && zones.length > 0) {
+          let maxScore = -1;
+          let bestZ: any = null;
+          zones.forEach((z: any) => {
+            const score = z.ml_risk_score !== undefined ? z.ml_risk_score : (z.risk_score || 0);
+            if (score > maxScore) {
+              maxScore = score;
+              bestZ = z;
+            }
+          });
+          if (bestZ) {
+            highestRisk = maxScore.toString();
+            bestZoneName = bestZ.name;
+            bestZoneSeverity = bestZ.ml_risk_level || bestZ.risk_level || 'Medium';
+            riskSource = bestZ.model_used ? 'ML' : 'Rule-Based Fallback';
+          }
+        }
 
         return {
           activeIncidents: activeCount,
@@ -52,8 +83,11 @@ const Dashboard = () => {
           availableResources: availCount,
           totalResources: resources && Array.isArray(resources) && resources.length > 0 ? resources.length.toString() : prev.totalResources,
           riskScore: highestRisk,
-          insightZone: insight && insight.affected_zone ? insight.affected_zone : prev.insightZone,
-          insightSeverity: insight && insight.severity ? insight.severity.toLowerCase() : prev.insightSeverity
+          insightZone: bestZoneName,
+          insightSeverity: bestZoneSeverity,
+          riskSource: riskSource,
+          totalIncidents: totalIncCount,
+          resolvedIncidents: resolvedIncCount
         };
       });
     };
@@ -81,16 +115,18 @@ const Dashboard = () => {
       </div>
 
       {/* Intelligence Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch mt-6">
-        <div className="lg:col-span-6">
-          <IncidentFeed />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
+        <div className="lg:col-span-6 h-[450px]">
+          <IncidentFeed incidents={dashboardIncidents} />
         </div>
-        <div className="lg:col-span-6">
+        <div className="lg:col-span-6 flex flex-col h-[450px]">
           <AIInsights />
         </div>
-        <div className="lg:col-span-12">
-          <QuickActions />
-        </div>
+      </div>
+
+      {/* Quick Actions - Full Width */}
+      <div className="mt-6">
+        <QuickActions />
       </div>
 
       {/* Advanced Analytics - Full Width */}

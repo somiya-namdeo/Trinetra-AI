@@ -61,6 +61,7 @@ const Analytics = () => {
   const [riskData, setRiskData] = useState<any[]>(defaultRiskData);
   const [resourceData, setResourceData] = useState<any[]>(defaultResourceData);
   const [heatMapCells, setHeatMapCells] = useState<any[]>(defaultHeatMapCells);
+  const [mlStats, setMlStats] = useState<any>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -123,6 +124,33 @@ const Analytics = () => {
 
       if (zones && Array.isArray(zones) && zones.length > 0) {
          // Heatmap is now using the structured mock array for rich realism
+         
+         // ML Stats calculation
+         const mlZones = zones.filter((z: any) => z.model_used !== undefined || z.ml_risk_score !== undefined);
+         if (mlZones.length > 0) {
+             const model_used = mlZones[0].model_used;
+             let highestScore = -1;
+             let highestZone = '';
+             let totalScore = 0;
+             let count = 0;
+             
+             mlZones.forEach((z: any) => {
+                 const score = z.ml_risk_score || z.risk_score || 0;
+                 totalScore += score;
+                 count++;
+                 if (score > highestScore) {
+                     highestScore = score;
+                     highestZone = z.name || 'Unknown';
+                 }
+             });
+             
+             setMlStats({
+                 model: mlZones[0].ml_model_name || 'Random Forest Regressor',
+                 status: model_used ? 'Active' : 'Rule-Based Fallback Active',
+                 highestZone: highestZone,
+                 avgScore: count > 0 ? Math.round(totalScore / count) : 0
+             });
+         }
       }
 
       setLoading(false);
@@ -320,7 +348,17 @@ const Analytics = () => {
       </div>
 
       {/* ROW 3: KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="glass-card p-5 border border-[#8b5cf6]/30 bg-[#8b5cf6]/5 transition-colors">
+          <p className="text-[10px] text-[#8b5cf6] font-bold uppercase tracking-widest mb-3">ML-Based Risk Prediction</p>
+          <div className="space-y-1">
+            <p className="text-xs text-gray-300 flex justify-between"><span>Model:</span> <span className="font-mono text-[9px] truncate ml-2 text-right">{mlStats?.model || 'Random Forest Regressor'}</span></p>
+            <p className="text-xs text-gray-300 flex justify-between"><span>Status:</span> <span className="font-bold text-white text-right">{mlStats?.status || 'Rule-Based Fallback Active'}</span></p>
+            <p className="text-xs text-gray-300 flex justify-between"><span>Highest Risk Zone:</span> <span className="font-bold text-white text-right">{mlStats?.highestZone || '--'}</span></p>
+            <p className="text-xs text-gray-300 flex justify-between"><span>Avg ML Score:</span> <span className="font-bold text-white text-right">{mlStats?.avgScore || '--'}</span></p>
+          </div>
+        </div>
+        
         <div className="glass-card p-5 border border-cardBorder hover:border-primary/30 transition-colors">
           <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-3">AVG. RESPONSE TIME</p>
           <p className="text-2xl font-bold text-white mb-1">3m 42s</p>

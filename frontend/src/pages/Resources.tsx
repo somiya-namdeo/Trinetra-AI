@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Network, Zap, Truck, ShieldAlert, HeartPulse, Shield, Thermometer, Loader2, CheckCircle2, TrendingUp, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Network, Zap, Truck, ShieldAlert, HeartPulse, Shield, Thermometer, Loader2, CheckCircle2, TrendingUp, AlertTriangle, ArrowRight, Flame, Radio, Users } from 'lucide-react';
 import { getResources, getIncidents } from '../services/api';
 
 const Resources = () => {
@@ -23,105 +23,262 @@ const Resources = () => {
   
   // Track assigned state for individual actions/resources
   const [assignedResources, setAssignedResources] = useState<Record<string, boolean>>({});
-  const [fieldUnits, setFieldUnits] = useState<any[]>([
+  const initialMocks = [
     { id: 'u1', name: 'Ambulance 01', type: 'AMB-01', status: 'Deployed', location: 'Gate 7', eta: 'On site', assignment: 'INC-2840', fit: 82, isRecommended: false },
     { id: 'u2', name: 'Ambulance 02', type: 'AMB-02', status: 'Available', location: 'Base', eta: '3 min', assignment: 'None', fit: 96, isRecommended: true, recommendFor: 'Elderly collapse near Gate 7' },
     { id: 'u3', name: 'Medical Team Alpha', type: 'MED-01', status: 'Deployed', location: 'Zone A', eta: 'On site', assignment: 'INC-2841', fit: 75, isRecommended: false },
     { id: 'u4', name: 'Medical Team Bravo', type: 'MED-02', status: 'Available', location: 'Zone B', eta: '4 min', assignment: 'None', fit: 94, isRecommended: true, recommendFor: 'Heat Stress Cluster — Zone A' },
     { id: 'u5', name: 'Security Unit 01', type: 'SEC-01', status: 'Deployed', location: 'North Gate', eta: 'On site', assignment: 'INC-2838', fit: 88, isRecommended: false },
     { id: 'u6', name: 'Security Unit 02', type: 'SEC-02', status: 'Available', location: 'Gate 7', eta: '2 min', assignment: 'None', fit: 91, isRecommended: true, recommendFor: 'Minor crowd surge near Gate 3' },
-  ]);
+  ];
+  const [fieldUnits, setFieldUnits] = useState<any[]>(initialMocks);
+
+  const calculateFitScore = (unit: any, targetDemand: string) => {
+    let etaScore = 0;
+    const etaStr = String(unit.eta || '').toLowerCase();
+    let mins = 0;
+    if (etaStr.includes('on site') || etaStr.includes('now')) mins = 1;
+    else {
+      const match = etaStr.match(/(\d+)/);
+      if (match) mins = parseInt(match[1]);
+      else mins = 10;
+    }
+    if (mins <= 2) etaScore = 100;
+    else if (mins <= 5) etaScore = 90;
+    else if (mins <= 10) etaScore = 75;
+    else etaScore = 50;
+    
+    let availScore = 0;
+    const status = unit.status;
+    if (status === 'Available') availScore = 100;
+    else if (status === 'Busy') availScore = 60;
+    else if (status === 'Deployed') availScore = 40;
+    else availScore = 0;
+    
+    let locScore = 65;
+    const d = targetDemand.toLowerCase();
+    let targetLoc = '';
+    if (d.includes('gate 7')) targetLoc = 'Gate 7';
+    else if (d.includes('zone a')) targetLoc = 'Zone A';
+    else if (d.includes('north gate')) targetLoc = 'North Gate';
+    else if (d.includes('gate 3')) targetLoc = 'Gate 3';
+    else if (d.includes('food court')) targetLoc = 'Food Court';
+    else if (d.includes('zone b')) targetLoc = 'Zone B';
+
+    if (targetLoc && unit.location && (unit.location.includes(targetLoc) || targetLoc.includes(unit.location))) {
+        locScore = 100;
+    } else if (targetLoc) {
+        locScore = 40;
+    }
+    
+    let capScore = 0;
+    const cap = String(unit.capacity || 'N/A').toLowerCase();
+    if (cap === 'n/a' || cap === '0') {
+      const hash = unit.id.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
+      capScore = hash % 2 === 0 ? 100 : 70;
+    } else {
+       const num = parseInt(cap);
+       if (num >= 6) capScore = 100;
+       else if (num >= 3) capScore = 70;
+       else capScore = 40;
+    }
+    
+    const finalScore = (etaScore * 0.4) + (locScore * 0.3) + (availScore * 0.2) + (capScore * 0.1);
+    const variance = (unit.name.length % 5) - 2; 
+    return Math.min(100, Math.max(0, Math.floor(finalScore + variance)));
+  };
+
+  const generateDeploymentPlan = (scenario: any, units: any[]) => {
+    let generatedPlans: any[] = [];
+    let planId = Date.now();
+    const d = scenario.demand.toLowerCase();
+    let loc = 'Site';
+    if (d.includes('gate 7')) loc = 'Gate 7';
+    else if (d.includes('zone a')) loc = 'Zone A';
+    else if (d.includes('north gate')) loc = 'North Gate';
+    else if (d.includes('gate 3')) loc = 'Gate 3';
+    else if (d.includes('food court')) loc = 'Food Court';
+    else if (d.includes('zone b')) loc = 'Zone B';
+
+    let updatedUnits = units.map(u => {
+       const typeLower = (u.type || '').toLowerCase();
+       const nameLower = (u.name || '').toLowerCase();
+       let score = 70;
+       
+       if (d.includes('lost') || d.includes('missing')) {
+         if (typeLower.includes('volunteer')) score += 20;
+         if (typeLower.includes('security')) score += 20;
+         if (typeLower.includes('drone')) score += 20;
+         if (typeLower.includes('command')) score += 20;
+       } else if (d.includes('medical') || d.includes('collapse') || d.includes('health')) {
+         if (typeLower.includes('ambulance') || typeLower.includes('medical')) score += 20;
+         if ((d.includes('crowd') || d.includes('gate')) && typeLower.includes('security')) score += 20;
+       } else if (d.includes('fire') || d.includes('hazard')) {
+         if (typeLower.includes('fire')) score += 20;
+         if (typeLower.includes('ambulance') || typeLower.includes('medical')) score += 20;
+         if (typeLower.includes('security')) score += 20;
+         if (typeLower.includes('command')) score += 20;
+       } else if (d.includes('crowd') || d.includes('surge') || d.includes('congestion')) {
+         if (typeLower.includes('security')) score += 20;
+         if (typeLower.includes('volunteer')) score += 20;
+         if (typeLower.includes('drone')) score += 20;
+         if (typeLower.includes('command')) score += 20;
+       } else if (d.includes('water') || d.includes('infrastructure')) {
+         if (typeLower.includes('water')) score += 20;
+         if (typeLower.includes('volunteer')) score += 20;
+         if (typeLower.includes('command')) score += 20;
+         if ((d.includes('crowd') || d.includes('risk')) && typeLower.includes('security')) score += 20;
+       }
+       
+       const etaNum = u.eta_minutes || 0;
+       if (etaNum < 5) score += 5;
+       else if (etaNum < 15) score += 2;
+       
+       return {
+         ...u,
+         dynamicFit: Math.min(score, 99),
+         isRecommended: false,
+         recommendFor: score > 80 ? scenario.demand : 'Standby'
+       };
+    });
+    
+    // Highlight/glow only the top 3 to 4 best matching units across all recommended resource types.
+    const availableRecs = updatedUnits.filter(u => String(u.status).toUpperCase() === 'AVAILABLE' && u.dynamicFit > 80)
+         .sort((a, b) => b.dynamicFit - a.dynamicFit)
+         .slice(0, 4);
+         
+    availableRecs.forEach(u => u.isRecommended = true);
+    
+    // Sort recommended cards to the top
+    updatedUnits.sort((a, b) => {
+       if (a.isRecommended && !b.isRecommended) return -1;
+       if (!a.isRecommended && b.isRecommended) return 1;
+       if (String(a.status).toUpperCase() === 'DEPLOYED' && String(b.status).toUpperCase() !== 'DEPLOYED') return -1;
+       if (String(a.status).toUpperCase() !== 'DEPLOYED' && String(b.status).toUpperCase() === 'DEPLOYED') return 1;
+       return 0;
+    });
+
+    const getUnit = (typeMatch: string) => {
+       const scoredUnits = updatedUnits.filter(u => u.type?.toLowerCase().includes(typeMatch) || u.name?.toLowerCase().includes(typeMatch));
+       scoredUnits.sort((a, b) => b.dynamicFit - a.dynamicFit);
+       
+       const avail = scoredUnits.find(u => String(u.status).toUpperCase() === 'AVAILABLE');
+       if (avail) return `${avail.name} (${avail.dynamicFit}%)`;
+       const anyUnit = scoredUnits[0];
+       return anyUnit ? `${anyUnit.name} (${anyUnit.dynamicFit}%)` : `Standby Unit (${typeMatch})`;
+    };
+
+    if (d.includes('water') || d.includes('infrastructure')) {
+      generatedPlans.push({ id: `dp${planId++}`, action: `Dispatch ${getUnit('water')} to ${loc}`, priority: 'High', impact: 'Critical', effort: 'Medium' });
+      generatedPlans.push({ id: `dp${planId++}`, action: `Deploy ${getUnit('volunteer')} to ${loc}`, priority: 'High', impact: 'High', effort: 'Low' });
+      generatedPlans.push({ id: `dp${planId++}`, action: `Send ${getUnit('command')} to ${loc}`, priority: 'Medium', impact: 'Moderate', effort: 'Low' });
+      generatedPlans.push({ id: `dp${planId++}`, action: `Assign ${getUnit('sec')} for crowd risk control`, priority: 'Medium', impact: 'Moderate', effort: 'Low' });
+    } else if (d.includes('crowd') || d.includes('congestion') || d.includes('surge')) {
+      generatedPlans.push({ id: `dp${planId++}`, action: `Deploy ${getUnit('sec')} to ${loc}`, priority: 'High', impact: 'Critical', effort: 'Medium' });
+      generatedPlans.push({ id: `dp${planId++}`, action: `Deploy ${getUnit('volunteer')} to ${loc}`, priority: 'High', impact: 'High', effort: 'Low' });
+      generatedPlans.push({ id: `dp${planId++}`, action: `Send ${getUnit('drone')} to ${loc}`, priority: 'Medium', impact: 'Moderate', effort: 'Low' });
+      generatedPlans.push({ id: `dp${planId++}`, action: `Send ${getUnit('command')} to ${loc}`, priority: 'Medium', impact: 'Moderate', effort: 'Low' });
+    } else if (d.includes('lost') || d.includes('missing')) {
+      generatedPlans.push({ id: `dp${planId++}`, action: `Deploy ${getUnit('volunteer')} to search zone`, priority: 'High', impact: 'High', effort: 'Low' });
+      generatedPlans.push({ id: `dp${planId++}`, action: `Assign ${getUnit('sec')} to gate exits`, priority: 'High', impact: 'High', effort: 'Medium' });
+      generatedPlans.push({ id: `dp${planId++}`, action: `Send ${getUnit('drone')} for search support`, priority: 'Medium', impact: 'High', effort: 'Low' });
+      generatedPlans.push({ id: `dp${planId++}`, action: `Generate PA announcement`, priority: 'Low', impact: 'High', effort: 'Low' });
+    } else if (d.includes('medical') || d.includes('collapse') || d.includes('health')) {
+      generatedPlans.push({ id: `dp${planId++}`, action: `Dispatch ${getUnit('amb')} to ${loc}`, priority: 'High', impact: 'Critical', effort: 'Low' });
+      generatedPlans.push({ id: `dp${planId++}`, action: `Deploy ${getUnit('med')} to ${loc}`, priority: 'High', impact: 'Critical', effort: 'Low' });
+      generatedPlans.push({ id: `dp${planId++}`, action: `Assign ${getUnit('sec')} for crowd control`, priority: 'Medium', impact: 'Moderate', effort: 'Low' });
+    } else if (d.includes('fire') || d.includes('hazard')) {
+      generatedPlans.push({ id: `dp${planId++}`, action: `Dispatch ${getUnit('fire')} to ${loc}`, priority: 'High', impact: 'Critical', effort: 'Low' });
+      generatedPlans.push({ id: `dp${planId++}`, action: `Dispatch ${getUnit('amb')} to ${loc}`, priority: 'High', impact: 'High', effort: 'Low' });
+      generatedPlans.push({ id: `dp${planId++}`, action: `Assign ${getUnit('sec')} to ${loc}`, priority: 'High', impact: 'Moderate', effort: 'Low' });
+      generatedPlans.push({ id: `dp${planId++}`, action: `Send ${getUnit('command')} to ${loc}`, priority: 'Medium', impact: 'Moderate', effort: 'Low' });
+    } else {
+       generatedPlans.push({ id: `dp${planId++}`, action: `Dispatch ${getUnit('sec')} to ${loc}`, priority: 'High', impact: 'Moderate', effort: 'Low' });
+    }
+
+    setDeploymentPlan(generatedPlans);
+    return updatedUnits;
+  };
 
   useEffect(() => {
     const fetchResources = async () => {
       setLoading(true);
       const [data, incidents] = await Promise.all([getResources(), getIncidents()]);
       
-      if (data && Array.isArray(data) && data.length > 0) {
-        const mappedData = data.map((unit: any, idx: number) => {
-           const fallbackUnit = fieldUnits[idx] || {};
+      let rawResources = data;
+      if (!rawResources || !Array.isArray(rawResources) || rawResources.length === 0) {
+        rawResources = initialMocks;
+      }
+      
+      if (rawResources.length > 0) {
+        const mappedData = rawResources.map((unit: any, idx: number) => {
+           const fallbackUnit = initialMocks[idx] || {};
            
-           let etaText = `${unit.eta_minutes} min`;
-           if (unit.eta_minutes === 0) {
-               etaText = unit.status === 'Available' ? 'Available now' : 'On site';
-           } else if (unit.eta_minutes === undefined) {
-               etaText = fallbackUnit.eta;
+           const safeName = unit.name || fallbackUnit.name || "Unnamed Resource";
+           const safeType = unit.type || fallbackUnit.type || "General Resource";
+           const safeStatus = unit.status || fallbackUnit.status || "Available";
+           const safeLocation = unit.location || unit.zone || fallbackUnit.location || "Standby Base";
+           const safeEta = unit.eta_minutes !== undefined && unit.eta_minutes !== null ? (unit.eta_minutes === 0 ? (safeStatus === 'Available' ? 'Available now' : 'On site') : `${unit.eta_minutes} min`) : (unit.eta || fallbackUnit.eta || "Available now");
+           let safeTask = unit.assigned_incident_id || unit.task || fallbackUnit.assignment || "Unassigned";
+           let safeFit = unit.bestFit || fallbackUnit.fit || 75;
+           let safeCapacity = unit.capacity ?? "N/A";
+           
+           const nameLower = safeName.toLowerCase();
+           const typeLower = safeType.toLowerCase();
+           
+           if (nameLower.includes('fire') || typeLower.includes('fire')) {
+             if (safeCapacity === 'N/A') safeCapacity = 6;
+             safeFit = safeFit === 75 ? 80 : safeFit;
+           } else if (nameLower.includes('drone') || typeLower.includes('drone')) {
+             if (safeCapacity === 'N/A') safeCapacity = 1;
+             if (safeTask === 'Unassigned') safeTask = 'Surveillance / Unassigned';
+             safeFit = safeFit === 75 ? 70 : safeFit;
+           } else if (nameLower.includes('volunteer') || typeLower.includes('volunteer')) {
+             if (safeCapacity === 'N/A') safeCapacity = 8;
+             if (safeTask === 'Unassigned') safeTask = 'Crowd Support / Unassigned';
+             safeFit = safeFit === 75 ? 75 : safeFit;
+           } else if (nameLower.includes('command') || typeLower.includes('command')) {
+             if (safeCapacity === 'N/A') safeCapacity = 8;
+             if (safeTask === 'Unassigned') safeTask = 'Coordination / Unassigned';
+             safeFit = safeFit === 75 ? 85 : safeFit;
            }
 
-           const assignmentText = unit.assigned_incident_id || 'Unassigned';
-           
-           let bestFitScore = fallbackUnit.fit || Math.floor(Math.random() * 20) + 70;
            let recommendFor = fallbackUnit.recommendFor || 'Standby';
-
-           if (unit.status === 'Available' && incidents && incidents.length > 0) {
+           if (safeStatus === 'Available' && incidents && incidents.length > 0) {
              const activeIncs = incidents.filter((i: any) => i.status !== 'Resolved');
              if (activeIncs.length > 0) {
                const targetInc = activeIncs[idx % activeIncs.length];
-               
                let score = 70;
-               if (targetInc.category?.includes('Medical') && unit.type?.includes('Medical')) score += 15;
-               if (targetInc.category?.includes('Fire') && unit.type?.includes('Fire')) score += 15;
-               if (targetInc.zone === unit.location) score += 10;
-               
+               if (targetInc.category?.includes('Medical') && typeLower.includes('medical')) score += 15;
+               if (targetInc.category?.includes('Fire') && typeLower.includes('fire')) score += 15;
+               if (targetInc.zone === safeLocation || targetInc.location === safeLocation) score += 10;
                const etaNum = unit.eta_minutes || 0;
                if (etaNum < 5) score += 5;
                else if (etaNum < 15) score += 2;
-               
-               bestFitScore = Math.min(score, 99);
+               safeFit = Math.min(score, 99);
                recommendFor = `${targetInc.category} — ${targetInc.location || targetInc.zone}`;
-             } else {
-               recommendFor = 'Standby';
              }
-           } else if (unit.status !== 'Available') {
+           } else if (safeStatus !== 'Available') {
              recommendFor = 'Standby';
            }
 
            return { 
-               ...fallbackUnit, 
                ...unit,
-               eta: etaText,
-               assignment: assignmentText,
-               location: unit.location || unit.zone || fallbackUnit.location,
-               fit: bestFitScore,
-               isRecommended: unit.status === 'Available' && bestFitScore > 80,
+               id: unit.id || fallbackUnit.id || `res-${idx}`,
+               name: safeName,
+               type: safeType,
+               status: safeStatus,
+               location: safeLocation,
+               capacity: safeCapacity,
+               eta: safeEta,
+               assignment: safeTask,
+               fit: safeFit,
+               isRecommended: safeStatus === 'Available' && safeFit > 80,
                recommendFor: recommendFor
            };
         });
-        setFieldUnits(mappedData);
-        
-        // Generate dynamic deployment plan based on data
-        let generatedPlans: any[] = [];
-        let planId = 1;
-        const availableUnits = mappedData.filter((u: any) => u.status === 'Available');
-        const activeIncs = incidents && Array.isArray(incidents) ? incidents.filter((i: any) => i.severity === 'Critical' || i.severity === 'High') : [];
-        
-        availableUnits.slice(0, 3).forEach((u: any, i: number) => {
-           const inc = activeIncs[i % activeIncs.length] || { location: 'Zone A', category: 'Emergency' };
-           generatedPlans.push({
-             id: `dp${planId++}`,
-             action: `Dispatch ${u.name} to ${inc.zone || inc.location}`,
-             priority: 'High', impact: 'Critical', effort: 'Low'
-           });
-        });
-        
-        const otherUnits = mappedData.filter((u: any) => u.status !== 'Available' && u.status !== 'Maintenance').slice(0, 3);
-        otherUnits.forEach((u: any) => {
-           generatedPlans.push({
-             id: `dp${planId++}`,
-             action: `Reposition ${u.name} near ${u.location || 'Riverfront'}`,
-             priority: 'Medium', impact: 'Moderate', effort: 'Medium'
-           });
-        });
-        
-        if (generatedPlans.length < 5) {
-          generatedPlans.push(
-            { id: `dp${planId++}`, action: 'Deploy Water Supply 02 to Zone A', priority: 'High', impact: 'High', effort: 'Medium' },
-            { id: `dp${planId++}`, action: 'Keep Fire Unit 03 on standby near Food Court', priority: 'Low', impact: 'Low', effort: 'None' },
-            { id: `dp${planId++}`, action: 'Assign Volunteer Team 05 to North Gate queue control', priority: 'Medium', impact: 'Moderate', effort: 'Low' }
-          );
-        }
-        
-        setDeploymentPlan(generatedPlans.slice(0, 7));
+        const finalUnits = generateDeploymentPlan(optScenario, mappedData);
+        setFieldUnits(finalUnits);
       }
       setLoading(false);
     };
@@ -137,6 +294,10 @@ const Resources = () => {
       setIsOptimized(true);
       const nextScenario = OPTIMIZATION_SCENARIOS[Math.floor(Math.random() * OPTIMIZATION_SCENARIOS.length)];
       setOptScenario(nextScenario);
+      setFieldUnits(prev => { 
+        const updated = generateDeploymentPlan(nextScenario, prev); 
+        return updated; 
+      });
       setShowToast({ show: true, message: `Optimization applied: Focus shifted to ${nextScenario.demand}` });
       
       setTimeout(() => setShowToast({ show: false, message: '' }), 4000);
@@ -151,6 +312,7 @@ const Resources = () => {
       
       const unitMatch = fieldUnits.find(u => planText.includes(u.name));
       if (unitMatch) {
+         setAssignedResources(prev => ({ ...prev, [unitMatch.id]: true }));
          setFieldUnits(prev => prev.map(u => {
            if (u.id === unitMatch.id) {
              const newLoc = planText.split(' to ')[1] || planText.split(' near ')[1] || u.location;
@@ -194,17 +356,24 @@ const Resources = () => {
     setTimeout(() => setShowToast({ show: false, message: '' }), 3000);
   };
 
-  const getResourceCounts = (typeStr: string) => {
+  const getResourceCounts = (typeStr: string, fallbackDeployed: number, fallbackTotal: number) => {
     const units = fieldUnits.filter(u => u.type?.toLowerCase().includes(typeStr) || u.name?.toLowerCase().includes(typeStr));
-    const available = units.filter(u => u.status === 'Available').length;
-    return { current: available, total: Math.max(units.length, 1) };
+    if (units.length > 0) {
+      const deployed = units.filter(u => u.status?.toLowerCase() === 'deployed' || u.status?.toLowerCase() === 'busy' || u.status?.toLowerCase() === 'assigned').length;
+      return { current: deployed, total: units.length };
+    }
+    return { current: fallbackDeployed, total: fallbackTotal };
   };
 
   const predictedDemands = [
-    { type: 'Ambulances', ...getResourceCounts('amb'), predicted: '+2', icon: Truck, color: 'text-primary', badge: 'bg-primary/20 text-primary border-primary/30', risk: 'High', riskColor: 'text-warning' },
-    { type: 'Medical Teams', ...getResourceCounts('med'), predicted: '+1', icon: HeartPulse, color: 'text-secondary', badge: 'bg-secondary/20 text-secondary border-secondary/30', risk: 'Moderate', riskColor: 'text-primary' },
-    { type: 'Security Units', ...getResourceCounts('sec'), predicted: '+3', icon: Shield, color: 'text-warning', badge: 'bg-warning/20 text-warning border-warning/30', risk: 'Critical', riskColor: 'text-critical' },
-    { type: 'Water Tankers', ...getResourceCounts('wat'), predicted: '+2', icon: Thermometer, color: 'text-orange-500', badge: 'bg-orange-500/20 text-orange-500 border-orange-500/30', risk: 'High', riskColor: 'text-warning' }
+    { type: 'Ambulances', ...getResourceCounts('amb', 4, 8), predicted: '+2', icon: Truck, color: 'text-primary', badge: 'bg-primary/20 text-primary border-primary/30', risk: 'High', riskColor: 'text-warning' },
+    { type: 'Medical Teams', ...getResourceCounts('med', 5, 10), predicted: '+1', icon: HeartPulse, color: 'text-secondary', badge: 'bg-secondary/20 text-secondary border-secondary/30', risk: 'Moderate', riskColor: 'text-primary' },
+    { type: 'Security Units', ...getResourceCounts('sec', 12, 20), predicted: '+3', icon: Shield, color: 'text-warning', badge: 'bg-warning/20 text-warning border-warning/30', risk: 'Critical', riskColor: 'text-critical' },
+    { type: 'Water Tankers', ...getResourceCounts('wat', 1, 3), predicted: '+2', icon: Thermometer, color: 'text-orange-500', badge: 'bg-orange-500/20 text-orange-500 border-orange-500/30', risk: 'High', riskColor: 'text-warning' },
+    { type: 'Fire Units', ...getResourceCounts('fire', 2, 6), predicted: '+2', icon: Flame, color: 'text-red-500', badge: 'bg-red-500/20 text-red-500 border-red-500/30', risk: 'High', riskColor: 'text-warning' },
+    { type: 'Drone Units', ...getResourceCounts('drone', 1, 2), predicted: '+1', icon: Radio, color: 'text-blue-400', badge: 'bg-blue-400/20 text-blue-400 border-blue-400/30', risk: 'Moderate', riskColor: 'text-primary' },
+    { type: 'Volunteer Teams', ...getResourceCounts('volunteer', 6, 10), predicted: '+4', icon: Users, color: 'text-emerald-400', badge: 'bg-emerald-400/20 text-emerald-400 border-emerald-400/30', risk: 'High', riskColor: 'text-warning' },
+    { type: 'Command Vehicles', ...getResourceCounts('command', 1, 2), predicted: '+1', icon: Shield, color: 'text-purple-400', badge: 'bg-purple-400/20 text-purple-400 border-purple-400/30', risk: 'Moderate', riskColor: 'text-primary' }
   ];
 
 
@@ -248,55 +417,50 @@ const Resources = () => {
             </div>
             
             <div className={`grid grid-cols-2 gap-4 mb-6 transition-opacity duration-500 ${isOptimizing ? 'opacity-50' : 'opacity-100'}`}>
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Current Demand Spike</p>
-                <p className={`font-bold flex items-center gap-2 ${optScenario.color}`}>
-                  <optScenario.icon size={16} /> {optScenario.demand}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Impact Metrics</p>
-                <div className="flex items-center gap-4">
-                  <div><span className="text-primary font-bold">{optScenario.conf}%</span> <span className="text-xs text-gray-400">Confidence</span></div>
-                  <div><span className="text-safe font-bold">{optScenario.time}%</span> <span className="text-xs text-gray-400">Time Saved</span></div>
+              <div className="bg-card/50 border border-cardBorder rounded-lg p-4">
+                <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Predicted Peak Demand</p>
+                <h3 className="font-bold text-white text-md mb-2">{optScenario.demand}</h3>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-primary">Confidence: {optScenario.conf}%</span>
+                  <span className="text-gray-600">|</span>
+                  <span className="text-gray-400">Impact in: {optScenario.time}m</span>
                 </div>
               </div>
-              <div className="col-span-2 bg-cardBorder/30 p-3 rounded border border-cardBorder">
+              <div className="bg-card/50 border border-cardBorder rounded-lg p-4">
                 <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Recommended Action</p>
-                <p className="text-sm text-gray-200">{optScenario.action}</p>
+                <div className="flex gap-2">
+                  <optScenario.icon className={`mt-0.5 ${optScenario.color}`} size={16} />
+                  <p className="font-bold text-white text-sm">{optScenario.action}</p>
+                </div>
               </div>
             </div>
-
+            
             <button 
               onClick={handleOptimize}
               disabled={isOptimizing}
-              className="bg-primary hover:bg-primary/90 text-white font-medium py-2.5 px-6 rounded-lg transition-colors flex items-center gap-2 shadow-[0_0_15px_rgba(14,165,233,0.3)] disabled:opacity-70 disabled:cursor-not-allowed"
+              className="bg-primary hover:bg-primary/90 text-white font-bold py-2.5 px-6 rounded-lg transition-colors flex items-center gap-2 shadow-[0_0_15px_rgba(14,165,233,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isOptimizing ? (
-                <><Loader2 size={16} className="animate-spin" /> Optimizing resource allocation...</>
-              ) : (
-                <><Network size={16} /> Run Resource Optimization</>
-              )}
+              {isOptimizing ? <><Loader2 className="animate-spin" size={18} /> Optimizing Network...</> : 'Run Re-Optimization Phase'}
             </button>
           </div>
         </div>
 
-        <div className="col-span-1 glass-card p-6">
-          <h3 className="font-bold text-white mb-4 flex items-center gap-2">
-            <TrendingUp size={16} className="text-secondary" /> Resource Load Balance
-          </h3>
+        {/* System Load Balance */}
+        <div className="col-span-1 glass-card p-6 border-t-2 border-t-safe">
+          <h3 className="font-bold text-white text-sm mb-4">Resource Load Balance</h3>
+          
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-300">Zone A</span>
-              <span className="text-xs font-bold text-critical bg-critical/20 border border-critical/30 px-2 py-0.5 rounded">Overloaded</span>
+              <span className="text-xs font-bold text-warning bg-warning/20 border border-warning/30 px-2 py-0.5 rounded">High Load</span>
             </div>
-            <div className="w-full bg-cardBorder h-1.5 rounded-full overflow-hidden mb-2"><div className="bg-critical h-full rounded-full w-[95%]"></div></div>
+            <div className="w-full bg-cardBorder h-1.5 rounded-full overflow-hidden mb-2"><div className="bg-warning h-full rounded-full w-[85%]"></div></div>
             
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-300">Gate 7</span>
-              <span className="text-xs font-bold text-warning bg-warning/20 border border-warning/30 px-2 py-0.5 rounded">High Demand</span>
+              <span className="text-sm text-gray-300">Zone B</span>
+              <span className="text-xs font-bold text-safe bg-safe/20 border border-safe/30 px-2 py-0.5 rounded">Optimal</span>
             </div>
-            <div className="w-full bg-cardBorder h-1.5 rounded-full overflow-hidden mb-2"><div className="bg-warning h-full rounded-full w-[80%]"></div></div>
+            <div className="w-full bg-cardBorder h-1.5 rounded-full overflow-hidden mb-2"><div className="bg-safe h-full rounded-full w-[35%]"></div></div>
             
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-300">Zone C</span>
@@ -316,7 +480,7 @@ const Resources = () => {
       {/* Predicted Demand */}
       <div>
         <h3 className="text-sm font-bold text-gray-300 mb-3 uppercase tracking-widest">Predicted Resource Demand - Next 30 Min</h3>
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {predictedDemands.map((demand, i) => (
             <div key={i} className="glass-card p-4 relative overflow-hidden group">
               <div className="flex justify-between items-start mb-3">
@@ -343,58 +507,126 @@ const Resources = () => {
         {/* Field Units List */}
         <div className="col-span-2 flex flex-col gap-4">
           <h3 className="text-sm font-bold text-gray-300 uppercase tracking-widest">Active Field Units</h3>
-          <div className="grid grid-cols-2 gap-4 flex-1">
-            {fieldUnits.map((unit) => {
-              const isHighlighted = isOptimized && unit.isRecommended;
-              const isUnitAssigned = assignedResources[unit.id];
-              const status = isUnitAssigned ? 'Assigned' : unit.status;
-              
-              let statusBadge = '';
-              if (isUnitAssigned) {
-                statusBadge = 'bg-safe/20 text-safe border-safe/30';
-              } else if (status === 'Available') {
-                statusBadge = 'bg-safe/20 text-safe border-safe/30';
-              } else if (status === 'Deployed') {
-                statusBadge = 'bg-primary/20 text-primary border-primary/30';
-              } else if (status === 'Busy') {
-                statusBadge = 'bg-warning/20 text-warning border-warning/30';
-              } else {
-                statusBadge = 'bg-critical/20 text-critical border-critical/30';
-              }
+          {fieldUnits.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center bg-card/30 border border-cardBorder rounded-lg p-6 text-center">
+              <p className="text-sm text-gray-400">No active field units found. Check resources API or fallback data.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4 flex-1">
+              {(() => {
+                const getRequiredResourceTypes = (demand: string) => {
+                  const d = demand.toLowerCase();
+                  if (d.includes('medical') || d.includes('collapse')) return ['amb', 'med'];
+                  if (d.includes('fire')) return ['fire', 'amb', 'sec'];
+                  if (d.includes('crowd') || d.includes('congestion') || d.includes('surge')) return ['sec', 'volunteer', 'drone'];
+                  if (d.includes('water')) return ['wat', 'volunteer', 'command'];
+                  if (d.includes('lost')) return ['volunteer', 'sec', 'drone'];
+                  if (d.includes('infrastructure') || d.includes('alert')) return ['command', 'sec', 'volunteer'];
+                  return [];
+                };
 
-              return (
-                <div key={unit.id} className={`glass-card p-4 transition-all duration-500 ${isHighlighted ? 'border-primary shadow-[0_0_20px_rgba(14,165,233,0.4)] bg-primary/10 animate-pulse-subtle' : ''}`}>
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg transition-colors ${isHighlighted ? 'bg-primary/20 text-primary' : 'bg-cardBorder text-gray-400'}`}>
-                        {unit.name.includes('Ambulance') ? <Truck size={18} /> : unit.name.includes('Medical') ? <HeartPulse size={18} /> : <Shield size={18} />}
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-white text-sm">{unit.name}</h4>
+                const requiredTypes = isOptimized ? getRequiredResourceTypes(optScenario.demand) : [];
+
+                const scoredUnits = fieldUnits.map(u => ({
+                   ...u,
+                   dynamicFit: isOptimized ? calculateFitScore(u, optScenario.demand) : (u.fit || 75)
+                }));
+
+                const sortedFieldUnits = [...scoredUnits].sort((a, b) => {
+                  const isMatchA = requiredTypes.some(t => (a.type || '').toLowerCase().includes(t) || (a.name || '').toLowerCase().includes(t));
+                  const isMatchB = requiredTypes.some(t => (b.type || '').toLowerCase().includes(t) || (b.name || '').toLowerCase().includes(t));
+                  
+                  if (isMatchA && !isMatchB) return -1;
+                  if (!isMatchA && isMatchB) return 1;
+                  
+                  if (isMatchA && isMatchB) {
+                     return b.dynamicFit - a.dynamicFit;
+                  }
+                  
+                  const isMaintA = a.status === 'Maintenance' || a.status === 'Unavailable';
+                  const isMaintB = b.status === 'Maintenance' || b.status === 'Unavailable';
+                  if (isMaintA && !isMaintB) return 1;
+                  if (!isMaintA && isMaintB) return -1;
+                  
+                  return b.dynamicFit - a.dynamicFit;
+                });
+
+                const isCritical = optScenario.demand.toLowerCase().includes('fire') || optScenario.demand.toLowerCase().includes('surge') || optScenario.demand.toLowerCase().includes('failure');
+                const topN = isCritical ? 5 : 3;
+                let recommendedCount = 0;
+
+                return sortedFieldUnits.map((unit) => {
+                  const isMatch = requiredTypes.some(t => (unit.type || '').toLowerCase().includes(t) || (unit.name || '').toLowerCase().includes(t));
+                  const isUnitAssigned = assignedResources[unit.id];
+                  
+                  let isHighlighted = false;
+                  if (isOptimized && isMatch && !isUnitAssigned && recommendedCount < topN) {
+                     isHighlighted = true;
+                     recommendedCount++;
+                  }
+                  
+                  const status = isUnitAssigned ? 'Assigned' : unit.status;
+                  const isAvail = status === 'Available';
+                  
+                  let statusBadge = '';
+                  if (isUnitAssigned) {
+                    statusBadge = 'bg-safe/20 text-safe border-safe/30';
+                  } else if (isHighlighted) {
+                    statusBadge = isAvail ? 'bg-primary text-white border-primary shadow-[0_0_10px_rgba(14,165,233,0.5)]' : 'bg-warning/20 text-warning border-warning/50';
+                  } else if (status === 'Available') {
+                    statusBadge = 'bg-safe/20 text-safe border-safe/30';
+                  } else if (status === 'Deployed') {
+                    statusBadge = 'bg-primary/20 text-primary border-primary/30';
+                  } else if (status === 'Busy') {
+                    statusBadge = 'bg-warning/20 text-warning border-warning/30';
+                  } else {
+                    statusBadge = 'bg-critical/20 text-critical border-critical/30';
+                  }
+                  
+                  const statusLabel = isHighlighted ? (isAvail ? 'Recommended' : 'Reassign Candidate') : status;
+
+                  const nameStr = unit.name || "";
+                let IconComponent = Shield;
+                if (nameStr.includes('Ambulance')) IconComponent = Truck;
+                else if (nameStr.includes('Medical')) IconComponent = HeartPulse;
+                else if (nameStr.includes('Fire')) IconComponent = ShieldAlert;
+                else if (nameStr.includes('Water')) IconComponent = Thermometer;
+                else if (nameStr.includes('Drone')) IconComponent = Zap;
+
+                return (
+                  <div key={unit.id} className={`glass-card p-4 transition-all duration-500 flex flex-col ${isHighlighted ? 'border-primary shadow-[0_0_20px_rgba(14,165,233,0.4)] bg-primary/10 animate-pulse-subtle' : ''}`}>
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg transition-colors ${isHighlighted ? 'bg-primary/20 text-primary' : 'bg-cardBorder text-gray-400'}`}>
+                          <IconComponent size={18} />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-white text-sm">{unit.name}</h4>
                         <p className="text-[10px] text-gray-500 font-mono">{unit.type}</p>
                       </div>
                     </div>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${statusBadge} uppercase`}>
-                      {status}
+                      {statusLabel}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-y-2 text-xs mb-4">
-                    <div className="text-gray-400">Location: <span className="text-gray-200">{unit.location}</span></div>
+                  <div className="grid grid-cols-2 gap-y-2 text-xs mb-auto">
+                    <div className="text-gray-400 truncate" title={unit.location}>Location: <span className="text-gray-200">{unit.location}</span></div>
                     <div className="text-gray-400">ETA: <span className="text-gray-200">{unit.eta}</span></div>
                     <div className="text-gray-400 truncate pr-2" title={unit.assignment}>Task: <span className="text-gray-200">{unit.assignment}</span></div>
-                    <div className="text-gray-400">Best Fit: <span className="text-primary font-bold">{unit.fit || 'N/A'}%</span></div>
-                    {unit.capacity && (
-                      <div className="text-gray-400 col-span-2">Capacity: <span className="text-gray-200">{unit.capacity}</span></div>
+                    <div className="text-gray-400">Best Fit: <span className="text-primary font-bold">{unit.dynamicFit}%</span></div>
+                    {unit.capacity !== undefined && (
+                      <div className="text-gray-400 col-span-2">Capacity: <span className="text-gray-200">{unit.capacity === 0 ? 'N/A' : unit.capacity}</span></div>
                     )}
                   </div>
 
                   {isHighlighted && !isUnitAssigned && (
-                    <div className="mb-3 text-[10px] bg-primary/10 border border-primary/20 p-2 rounded text-primary">
-                      <span className="font-bold">Recommended for:</span> {unit.recommendFor}
+                    <div className="my-3 text-[10px] bg-primary/10 border border-primary/20 p-2 rounded text-primary">
+                      <span className="font-bold">Recommended for:</span> {optScenario.demand}
                     </div>
                   )}
 
+                  <div className="mt-4 pt-3 border-t border-cardBorder">
                   {reassigningId === unit.id ? (
                     <div className="flex gap-2">
                       <select 
@@ -429,21 +661,24 @@ const Resources = () => {
                           isUnitAssigned || status === 'Maintenance'
                             ? 'bg-cardBorder/50 border-cardBorder text-gray-500 cursor-not-allowed'
                             : isHighlighted 
-                              ? 'bg-primary border-primary text-white hover:bg-primary/90 shadow-md shadow-primary/20' 
+                              ? 'bg-primary border-primary text-white hover:bg-primary/90 shadow-[0_0_15px_rgba(14,165,233,0.4)]' 
                               : 'bg-card border-cardBorder hover:bg-cardBorder/50 text-gray-300'
                         }`}
                       >
-                        {status === 'Maintenance' ? 'Unavailable' : isUnitAssigned ? 'Assigned' : status === 'Available' ? 'Deploy' : 'Reassign'}
+                        {status === 'Maintenance' ? 'Unavailable' : isUnitAssigned ? 'Assigned' : isHighlighted ? (isAvail ? 'Deploy Recommended' : 'Reassign Recommended') : (isAvail ? 'Deploy' : 'Reassign')}
                       </button>
-                      <button className="bg-card border border-cardBorder hover:bg-cardBorder/50 text-primary py-1.5 px-3 rounded transition-colors">
+                      <button className="bg-card border border-cardBorder hover:bg-cardBorder/50 text-primary py-1.5 px-3 rounded transition-colors flex-shrink-0">
                         <Zap size={14} />
                       </button>
                     </div>
                   )}
+                  </div>
                 </div>
               );
-            })}
-          </div>
+            });
+          })()}
+        </div>
+          )}
         </div>
 
         {/* Recommended Deployment Plan */}

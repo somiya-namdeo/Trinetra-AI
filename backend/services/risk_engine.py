@@ -42,26 +42,38 @@ def get_critical_zones(zones: list) -> list:
     """
     Evaluates a list of zones and returns only those with a risk_score >= 80.
     """
-    critical_zones = []
-    for zone in zones:
-        risk = calculate_zone_risk(zone)
-        if risk["risk_score"] >= 80:
-            enriched_zone = dict(zone)
-            enriched_zone["risk_score"] = risk["risk_score"]
-            enriched_zone["risk_level"] = risk["risk_level"]
-            critical_zones.append(enriched_zone)
+    enriched_all = enrich_zones_with_risk(zones)
+    critical_zones = [z for z in enriched_all if max(z.get("risk_score", 0), z.get("ml_risk_score", 0)) >= 80]
     return critical_zones
 
 def enrich_zones_with_risk(zones: list) -> list:
     """
     Adds calculated risk_score and risk_level to every zone object in the list.
+    Also injects ML-based predictions for comparison.
     """
+    # Import ml_service here to prevent circular imports
+    from services.ml_service import predict_zone_risk
+    
     enriched = []
     for zone in zones:
         enriched_zone = dict(zone)
+        # 1. Base rule engine
         risk = calculate_zone_risk(enriched_zone)
         enriched_zone["risk_score"] = risk["risk_score"]
-        enriched_zone["risk_level"] = risk["risk_level"]
+        
+        # 2. ML Prediction engine
+        ml_risk = predict_zone_risk(enriched_zone)
+        enriched_zone["ml_risk_score"] = ml_risk["ml_risk_score"]
+        enriched_zone["ml_risk_level"] = ml_risk["ml_risk_level"]
+        enriched_zone["model_used"] = ml_risk["model_used"]
+        enriched_zone["risk_source"] = ml_risk["risk_source"]
+        
+        # 3. Final primary level logic (Use ML if available, else rules)
+        if enriched_zone["model_used"]:
+            enriched_zone["risk_level"] = enriched_zone["ml_risk_level"]
+        else:
+            enriched_zone["risk_level"] = risk["risk_level"]
+            
         enriched.append(enriched_zone)
     return enriched
 

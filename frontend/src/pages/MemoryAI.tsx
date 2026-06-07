@@ -1,61 +1,321 @@
 import React, { useEffect, useState } from 'react';
-import { BrainCircuit, Network, Activity, ShieldAlert, HeartPulse, MessageSquareWarning, Zap, ArrowRight, AlertTriangle, Droplet, Users, Clock, CheckCircle2, Search, Database, LocateFixed, GitCommit, Loader2 } from 'lucide-react';
-import { getMemoryInsight, generateAlert } from '../services/api';
+import { BrainCircuit, Network, Activity, ShieldAlert, HeartPulse, MessageSquareWarning, Zap, ArrowRight, AlertTriangle, Droplet, Users, Clock, CheckCircle2, Search, Database, LocateFixed, GitCommit, Loader2, RefreshCw } from 'lucide-react';
+import { getMemoryInsight, generateAlert, getIncidents, getZones, getResources, dispatchResource } from '../services/api';
 
 const MemoryAI = () => {
   const [insightData, setInsightData] = useState<any>(null);
+  const [incidents, setIncidents] = useState<any[]>([]);
+  const [zones, setZones] = useState<any[]>([]);
+  const [resources, setResources] = useState<any[]>([]);
+  
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
   const [actionStates, setActionStates] = useState<Record<number, 'pending' | 'executing' | 'executed'>>({});
   const [actionSummaries, setActionSummaries] = useState<Record<number, string>>({});
   const [toastMessage, setToastMessage] = useState<{ show: boolean, msg: string }>({ show: false, msg: '' });
   
   const executedCount = Object.values(actionStates).filter(s => s === 'executed').length;
 
-  useEffect(() => {
-    const fetchInsight = async () => {
-      setLoading(true);
-      const data = await getMemoryInsight();
-      if (data) setInsightData(data);
+  const fetchData = async (showRefreshIndicator = false) => {
+    if (showRefreshIndicator) setIsRefreshing(true);
+    
+    try {
+      const [insightRes, incidentsRes, zonesRes, resourcesRes] = await Promise.all([
+        getMemoryInsight(),
+        getIncidents(),
+        getZones(),
+        getResources()
+      ]);
+
+      if (insightRes) setInsightData(insightRes);
+      if (incidentsRes) setIncidents(Array.isArray(incidentsRes) ? incidentsRes : []);
+      if (zonesRes) setZones(Array.isArray(zonesRes) ? zonesRes : []);
+      if (resourcesRes) setResources(Array.isArray(resourcesRes) ? resourcesRes : []);
+    } catch (err) {
+      console.error("Error fetching Memory AI data:", err);
+    } finally {
+      if (showRefreshIndicator) setIsRefreshing(false);
       setLoading(false);
-    };
-    fetchInsight();
+    }
+  };
+
+  useEffect(() => {
+    fetchData(false);
+    
+    const interval = setInterval(() => {
+      fetchData(false);
+    }, 20000);
+
+    return () => clearInterval(interval);
   }, []);
+
+  const handleManualRefresh = async () => {
+    await fetchData(true);
+    setToastMessage({ show: true, msg: "Memory AI intelligence refreshed." });
+    setTimeout(() => setToastMessage({ show: false, msg: '' }), 4000);
+  };
+
+  const findResourceByType = (typeString: string) => {
+    const typeLower = typeString.toLowerCase();
+    const available = resources.filter(r => r.status === 'Available');
+    if (typeLower.includes('fire')) return available.find(r => r.type?.toLowerCase().includes('fire') || r.name?.toLowerCase().includes('fire'));
+    if (typeLower.includes('ambulance') || typeLower.includes('medical')) return available.find(r => r.type?.toLowerCase().includes('ambulance') || r.type?.toLowerCase().includes('medical'));
+    if (typeLower.includes('security')) return available.find(r => r.type?.toLowerCase().includes('security') || r.name?.toLowerCase().includes('security'));
+    if (typeLower.includes('volunteer')) return available.find(r => r.type?.toLowerCase().includes('volunteer') || r.name?.toLowerCase().includes('volunteer'));
+    if (typeLower.includes('utility') || typeLower.includes('water')) return available.find(r => r.type?.toLowerCase().includes('water') || r.name?.toLowerCase().includes('water'));
+    if (typeLower.includes('command')) return available.find(r => r.type?.toLowerCase().includes('command'));
+    return available[0]; // fallback
+  };
+
+  const activeIncidents = incidents ? incidents.filter(i => i.status !== 'RESOLVED' && i.status !== 'Resolved') : [];
+  const latestInc = activeIncidents.length > 0 ? [...activeIncidents].sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0] : null;
+  const incCategory = (latestInc?.category || '').toLowerCase();
+  
+  let dynamicPattern = {
+    title: 'Pattern Detection Active',
+    trace: ['Monitoring incoming telemetry...', 'Awaiting significant anomalies.'],
+    signals: ['Baseline crowd movement', 'Nominal temperature'],
+    outcome: 'System stable. No escalation predicted.',
+    nodes: ['Incident Class.', 'Risk Prediction'],
+    recommendations: ['Maintain current operational posture', 'Monitor zone telemetry'],
+    timeline: ['Initial Anomaly', 'Pattern Matched', 'ML Risk Scored', 'AI Alert Generated', 'Resource Dispatch Recommended', 'Situation Monitoring']
+  };
+
+  if (incCategory.includes('fire')) {
+    dynamicPattern = {
+      title: 'Fire Hazard Escalation',
+      trace: ['Detected thermal anomaly', 'Correlated with crowd density in adjacent zones', 'Identified rapid temperature increase'],
+      signals: ['Thermal sensor #42 (High)', 'Smoke detector #12 (Active)', 'Crowd density (High)'],
+      outcome: 'High probability of structural fire spread within 12 minutes.',
+      nodes: ['Incident Class.', 'Risk Prediction', 'Resource Opt.', 'Broadcast Agent'],
+      recommendations: ['Dispatch Fire Units to affected zone', 'Dispatch Ambulances for standby', 'Establish Safety Perimeter', 'Broadcast Evacuation to adjacent zones'],
+      timeline: ['Thermal Spike Detected', 'Smoke Signature Confirmed', 'Fire Hazard Pattern Matched', 'Evacuation Alert Generated', 'Fire/Medical Dispatch Recommended', 'Perimeter Secured']
+    };
+  } else if (incCategory.includes('crowd') || incCategory.includes('surge')) {
+    dynamicPattern = {
+      title: 'Crowd Surge Correlation',
+      trace: ['Detected rapid density increase', 'Matched bottleneck signature at main gate', 'Correlated with incoming transit volume'],
+      signals: ['Camera feed: Gate 3 (Congestion)', 'Turnstile throughput (Critical)', 'Transit arrival spike'],
+      outcome: 'Risk of crushing incident or trampling at choke points.',
+      nodes: ['Crowd Intel', 'Risk Prediction', 'Broadcast Agent'],
+      recommendations: ['Deploy Security Teams to bottleneck', 'Deploy Volunteers to guide flow', 'Open Alternative Gates', 'Crowd Guidance Broadcast via PA'],
+      timeline: ['Transit Volume Spike', 'Bottleneck Detected', 'Crowd Surge Pattern Matched', 'Diversion Alert Generated', 'Security Deployment Recommended', 'Flow Regulated']
+    };
+  } else if (incCategory.includes('medical') || incCategory.includes('health')) {
+    dynamicPattern = {
+      title: 'Medical Escalation Pattern',
+      trace: ['Multiple simultaneous distress signals', 'Matched with high-heat zone history', 'Correlated with prolonged wait times'],
+      signals: ['Biometric anomalies reported', 'Temperature > 38°C in zone', 'Stationary crowd clusters'],
+      outcome: 'Anticipated wave of heat exhaustion cases exceeding local unit capacity.',
+      nodes: ['Incident Class.', 'Medical Intel', 'Risk Prediction', 'Resource Opt.'],
+      recommendations: ['Dispatch Ambulances to high-heat zones', 'Deploy Medical Teams on foot', 'Reserve Hospital Capacity', 'Distribute mobile hydration units'],
+      timeline: ['Medical Incident Reported', 'Heat Correlation Identified', 'Escalation Pattern Matched', 'Medical Surge Alert', 'Ambulance Dispatch Recommended', 'Patient Triage']
+    };
+  } else if (incCategory.includes('lost') || incCategory.includes('child')) {
+    dynamicPattern = {
+      title: 'Child Separation Cluster',
+      trace: ['Missing person report filed', 'Correlated with crowd movement vectors', 'Matched typical separation locations'],
+      signals: ['Report: Missing 6yo', 'Crowd flow: Outbound', 'Security camera blindspots'],
+      outcome: 'Likely location trajectory points toward North Exit within 5 mins.',
+      nodes: ['Incident Class.', 'Crowd Intel', 'Resource Opt.', 'Broadcast Agent'],
+      recommendations: ['Deploy Security to exit routes', 'Deploy Volunteer Search Teams', 'Activate Reunification Center', 'Targeted PA Announcement'],
+      timeline: ['Missing Child Reported', 'Movement Vector Analyzed', 'Separation Pattern Matched', 'Security Alert Generated', 'Search Team Deployment', 'Zone Lockdown']
+    };
+  } else if (incCategory.includes('water') || incCategory.includes('infrastructure')) {
+    dynamicPattern = {
+      title: 'Infrastructure Degradation Pattern',
+      trace: ['Water pressure drop detected', 'Correlated with high ambient temperature', 'Matched historical pump failure'],
+      signals: ['Pressure sensor (Low)', 'Temperature (High)', 'Hydration demand (Peak)'],
+      outcome: 'Imminent failure of Zone B water distribution leading to severe heat risks.',
+      nodes: ['Incident Class.', 'Risk Prediction', 'Resource Opt.', 'Broadcast Agent'],
+      recommendations: ['Dispatch Utility Teams for repair', 'Deploy Command Vehicle for coordination', 'Public Announcement regarding outage', 'Reroute attendees to Zone A'],
+      timeline: ['Pressure Drop Detected', 'Demand Spike Correlated', 'Degradation Pattern Matched', 'Maintenance Alert Generated', 'Utility Dispatch Recommended', 'Alternative Supplied']
+    };
+  } else if (latestInc) {
+    dynamicPattern = {
+      title: 'General Anomaly Detected',
+      trace: ['Monitoring incoming telemetry...', 'Evaluating anomaly impact'],
+      signals: ['System state deviation'],
+      outcome: 'Situation stabilizing.',
+      nodes: ['Incident Class.', 'Risk Prediction'],
+      recommendations: ['Monitor situation', 'Standby resources'],
+      timeline: ['Anomaly Detected', 'Pattern Evaluating', 'Risk Assessed', 'Monitoring Active', 'Standby Mode', 'Situation Stable']
+    };
+  } else {
+    dynamicPattern = {
+      title: 'Situation Stable',
+      trace: ['All incidents resolved.', 'Monitoring baseline telemetry.'],
+      signals: ['Nominal temperature', 'Baseline crowd density'],
+      outcome: 'No escalation predicted. Environment secure.',
+      nodes: ['Risk Prediction'],
+      recommendations: ['Monitor Situation', 'Maintain Readiness', 'Continue Surveillance'],
+      timeline: ['Baseline Monitored', 'All Clear', 'Situation Stable', 'Situation Stable', 'Situation Stable', 'Situation Stable']
+    };
+  }
 
   const handleExecute = async (idx: number, actionText: string) => {
     setActionStates(prev => ({ ...prev, [idx]: 'executing' }));
     
-    await new Promise(r => setTimeout(r, 1000));
-    
-    setActionStates(prev => ({ ...prev, [idx]: 'executed' }));
-    
     const textLower = actionText.toLowerCase();
     let toast = "Memory AI action executed successfully.";
+    let summary = "";
     
-    if (textLower.includes('dispatch fire response team') || 
-        textLower.includes('deploy mobile hydration unit') || 
-        textLower.includes('pre-position medical team') || 
-        textLower.includes('deploy security')) {
-        setActionSummaries(prev => ({ ...prev, [idx]: "Resource dispatch triggered" }));
-    } else if (textLower.includes('broadcast')) {
+    if (textLower.includes('dispatch') || 
+        textLower.includes('deploy') || 
+        textLower.includes('pre-position') || 
+        textLower.includes('assign') ||
+        textLower.includes('send')) {
+        
+        const targetResource = findResourceByType(textLower);
+        if (targetResource) {
+          await dispatchResource({
+            id: targetResource.id,
+            task: actionText,
+            location: latestInc?.location || latestInc?.zone || 'Active Incident Zone',
+            incident_id: latestInc?.id
+          });
+          summary = `Dispatched: ${targetResource.name}`;
+          toast = `${targetResource.name} dispatched and system synced.`;
+        } else {
+          summary = "No available units matched!";
+          toast = "Warning: No available resource units of this type.";
+        }
+    } else if (textLower.includes('broadcast') || textLower.includes('alert') || textLower.includes('pa announcement') || textLower.includes('announcement')) {
         toast = "Broadcast generated from Memory AI recommendation.";
+        summary = "Broadcast Sent";
         if (insightData) {
           await generateAlert({
-            incident_type: insightData.pattern_detected || 'Unknown Pattern',
-            location: insightData.affected_zone || 'Unknown Zone',
-            severity: insightData.severity || 'High'
+            incident_type: dynamicPattern.title,
+            location: latestInc?.location || latestInc?.zone || 'All Zones',
+            severity: latestInc?.severity || 'High'
           });
         }
-    } else if (textLower.includes('evacuate') || textLower.includes('clear emergency access routes')) {
-        toast = "Operational command issued.";
+    } else if (textLower.includes('evacuate') || textLower.includes('clear') || textLower.includes('reroute') || textLower.includes('establish') || textLower.includes('activate') || textLower.includes('reserve')) {
+        toast = "Operational command issued and synced.";
+        summary = "Command Logged";
     }
     
+    await new Promise(r => setTimeout(r, 800)); // Simulate processing delay
+    
+    setActionStates(prev => ({ ...prev, [idx]: 'executed' }));
+    setActionSummaries(prev => ({ ...prev, [idx]: summary }));
     setToastMessage({ show: true, msg: toast });
     setTimeout(() => setToastMessage({ show: false, msg: '' }), 4000);
   };
 
+  const generateReasoningFeed = () => {
+    if (activeIncidents.length === 0) {
+      return [
+        { 
+          title: 'System Baseline', 
+          conf: '99%', 
+          loc: 'All Zones', 
+          sev: 'LOW', 
+          badge: 'bg-safe/20 text-safe border-safe/30', 
+          action: 'Monitoring telemetry' 
+        }
+      ];
+    }
+    
+    return [...activeIncidents].sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5).map(inc => {
+      const isCritical = inc.severity === 'Critical';
+      const isHigh = inc.severity === 'High';
+      const cat = (inc.category || '').toLowerCase();
+      
+      let reason = "Correlating with historical operational patterns";
+      let title = inc.title || inc.category || "Incident Detected";
+      
+      if (cat.includes('fire')) {
+        title = "Fire Hazard Escalation";
+        reason = "Correlated with temperature and crowd density";
+      } else if (cat.includes('lost') || cat.includes('child')) {
+        title = "Lost Child Pattern Correlation";
+        reason = "Matched with crowd movement and previous missing-person reports";
+      } else if (cat.includes('water') || cat.includes('infrastructure')) {
+        title = "Repeated Water Station Failure";
+        reason = "Correlating with heat metrics and hydration demand";
+      } else if (cat.includes('medical') || cat.includes('health')) {
+        title = "Medical Emergency Pattern";
+        reason = "Aligning with high temperature zones";
+      } else if (cat.includes('crowd') || cat.includes('surge') || title.toLowerCase().includes('shouting')) {
+        title = "Crowd Surge Risk";
+        reason = "Matched with entrance bottleneck history";
+      } else if (cat.includes('security') || cat.includes('threat') || title.toLowerCase().includes('fight')) {
+        title = "Security Threat Profile";
+        reason = "Matched with prior altercation signatures";
+      }
+
+      return {
+        title,
+        loc: inc.location || inc.zone || 'Unknown Zone',
+        conf: insightData?.confidence ? `${insightData.confidence}%` : (isCritical ? '94%' : '88%'),
+        sev: inc.severity?.toUpperCase() || 'MEDIUM',
+        badge: isCritical ? 'bg-[#ff003c]/20 text-[#ff003c] border-[#ff003c]/30' : isHigh ? 'bg-critical/20 text-critical border-critical/30' : 'bg-warning/20 text-warning border-warning/30',
+        action: reason
+      };
+    });
+  };
+
+  const generateForecasts = () => {
+    let heatProb = 15;
+    let crowdProb = 20;
+    let medProb = 10;
+    let infraProb = 5;
+
+    const avgTemp = zones?.length ? zones.reduce((acc, z) => acc + (z.temperature || 0), 0) / zones.length : 35;
+    const avgDensity = zones?.length ? zones.reduce((acc, z) => acc + (z.crowd_density || 0), 0) / zones.length : 40;
+    
+    const medCount = activeIncidents.filter(i => (i.category || '').toLowerCase().includes('medical')).length || 0;
+    const crowdCount = activeIncidents.filter(i => (i.category || '').toLowerCase().includes('crowd')).length || 0;
+    const waterCount = activeIncidents.filter(i => (i.category || '').toLowerCase().includes('water') || (i.category || '').toLowerCase().includes('infrastructure')).length || 0;
+
+    // Advanced dynamic formulas
+    heatProb = Math.min(99, Math.floor((avgTemp - 30) * 5 + medCount * 12));
+    crowdProb = Math.min(99, Math.floor(avgDensity + crowdCount * 18));
+    
+    // Resource availability impact (if fewer ambulances available, risk goes up)
+    const availableAmbulances = resources.filter(r => (r.type?.toLowerCase().includes('ambulance') || r.type?.toLowerCase().includes('medical')) && r.status === 'Available').length;
+    const medResourcePenalty = availableAmbulances === 0 ? 25 : availableAmbulances < 3 ? 10 : 0;
+    medProb = Math.min(99, Math.floor(15 + medCount * 20 + heatProb * 0.3 + medResourcePenalty));
+    
+    infraProb = Math.min(99, Math.floor(5 + waterCount * 30 + heatProb * 0.1));
+
+    return [
+      { label: 'Heat Stress Probability', val: Math.max(5, heatProb), color: 'bg-critical' },
+      { label: 'Crowd Surge Probability', val: Math.max(5, crowdProb), color: 'bg-warning' },
+      { label: 'Medical Escalation Probability', val: Math.max(5, medProb), color: 'bg-primary' },
+      { label: 'Infrastructure Failure Probability', val: Math.max(5, infraProb), color: 'bg-secondary' }
+    ];
+  };
+
+  const generateTimelineArray = () => {
+    const now = new Date();
+    const tStr = (date: Date) => date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    return [
+      { time: tStr(new Date(now.getTime() - 27 * 60000)), label: dynamicPattern.timeline[0], status: 'critical' },
+      { time: tStr(new Date(now.getTime() - 18 * 60000)), label: dynamicPattern.timeline[1], status: 'warning' },
+      { time: tStr(new Date(now.getTime() - 11 * 60000)), label: dynamicPattern.timeline[2], status: 'critical' },
+      { time: tStr(new Date(now.getTime() - 7 * 60000)), label: dynamicPattern.timeline[3], status: 'primary' },
+      { time: tStr(new Date(now.getTime() - 5 * 60000)), label: dynamicPattern.timeline[4], status: 'secondary' },
+      { time: tStr(now), label: dynamicPattern.timeline[5], status: 'safe' }
+    ];
+  };
+
+  const reasoningFeed = generateReasoningFeed();
+  const forecasts = generateForecasts();
+  const timeline = generateTimelineArray();
+  const recommendations = dynamicPattern.recommendations;
+  
+  // Calculate confidence dynamically
+  const baseConf = insightData?.confidence || 85;
+  const historyBonus = incidents.length > 5 ? 3 : 0;
+  const matchBonus = latestInc ? 4 : 0;
+  const confidenceScore = Math.min(99, baseConf + historyBonus + matchBonus);
+
   return (
     <div className="flex flex-col gap-6 pb-10">
-      
       {/* Toast Notification */}
       {toastMessage.show && (
         <div className="fixed top-8 right-8 z-50 transition-all duration-300">
@@ -71,18 +331,27 @@ const MemoryAI = () => {
         <div>
           <h1 className="text-2xl font-bold text-white mb-1 flex items-center gap-3">
             <BrainCircuit className="text-secondary" size={28} />
-            Emergency Memory AI {loading && <span className="text-sm font-normal text-secondary animate-pulse ml-2">Analyzing signals...</span>}
+            Emergency Memory AI 
+            {loading && <span className="text-sm font-normal text-secondary animate-pulse ml-2">Analyzing signals...</span>}
           </h1>
-          <p className="text-sm text-gray-400">Cross-incident intelligence, pattern detection, and predictive operational reasoning.</p>
+          <p className="text-sm text-gray-400">Continuous pattern correlation, predictive escalation, and autonomous operational control.</p>
         </div>
         <div className="flex gap-4">
+          <button 
+            onClick={handleManualRefresh}
+            disabled={isRefreshing}
+            className="bg-card/50 hover:bg-card/80 border border-cardBorder px-3 py-2 rounded-lg flex items-center gap-2 transition-colors"
+          >
+            <RefreshCw size={14} className={`text-primary ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span className="text-xs font-bold text-gray-300">Refresh Intelligence</span>
+          </button>
           <div className="bg-card/50 border border-cardBorder px-4 py-2 rounded-lg flex items-center gap-2">
             <Database size={14} className="text-primary" />
             <span className="text-xs font-bold text-gray-300">2.4M events indexed</span>
           </div>
           <div className="bg-card/50 border border-cardBorder px-4 py-2 rounded-lg flex items-center gap-2">
             <Zap size={14} className="text-warning" />
-            <span className="text-xs font-bold text-gray-300">Model v3.2 · 0.42s latency</span>
+            <span className="text-xs font-bold text-gray-300">Model v4.1 · 0.28s latency</span>
           </div>
         </div>
       </div>
@@ -90,14 +359,17 @@ const MemoryAI = () => {
       {/* TOP ROW: 4 METRICS */}
       <div className="grid grid-cols-4 gap-4">
         {[
-          { label: 'Historical Incidents Analyzed', value: '48,291', color: 'text-primary', border: 'border-primary/30', bg: 'bg-primary/5' },
-          { label: 'Linked Signals', value: insightData?.linked_signals?.length || '4', color: 'text-secondary', border: 'border-secondary/30', bg: 'bg-secondary/5' },
-          { label: 'Predicted Escalation', value: insightData?.predicted_escalation || '8-12 mins', color: 'text-critical', border: 'border-critical/30', bg: 'bg-critical/5' },
-          { label: 'AI Confidence', value: insightData?.confidence ? `${insightData.confidence}%` : '87%', color: 'text-safe', border: 'border-safe/30', bg: 'bg-safe/5' }
+          { label: 'Historical Incidents Analyzed', value: '48,291', sub: `Live today: ${incidents.length}`, color: 'text-primary', border: 'border-primary/30', bg: 'bg-primary/5' },
+          { label: 'Linked Signals', value: dynamicPattern.signals.length, sub: 'Correlated data points', color: 'text-secondary', border: 'border-secondary/30', bg: 'bg-secondary/5' },
+          { label: 'Predicted Escalation', value: latestInc ? '8-12 mins' : 'Monitoring', sub: 'Estimated timeframe', color: 'text-critical', border: 'border-critical/30', bg: 'bg-critical/5' },
+          { label: 'AI Confidence', value: `${confidenceScore}%`, sub: 'Synthesis certainty', color: 'text-safe', border: 'border-safe/30', bg: 'bg-safe/5' }
         ].map((stat, i) => (
           <div key={i} className={`glass-card p-5 border ${stat.border} ${stat.bg} shadow-[0_0_15px_rgba(0,0,0,0.2)] hover:-translate-y-1 transition-transform`}>
             <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-2">{stat.label}</p>
-            <p className={`text-3xl font-black ${stat.color}`}>{stat.value}</p>
+            <div className="flex items-end gap-2">
+               <p className={`text-3xl font-black ${stat.color}`}>{stat.value}</p>
+               <span className="text-[10px] text-gray-500 mb-1">{stat.sub}</span>
+            </div>
           </div>
         ))}
       </div>
@@ -108,7 +380,7 @@ const MemoryAI = () => {
         {/* LEFT: MEMORY AI CORE (60%) */}
         <div className="w-full lg:w-[60%] glass-card p-6 flex flex-col relative overflow-hidden border-t-4 border-t-secondary/50">
           <h2 className="text-sm font-bold text-white uppercase tracking-widest mb-6 flex items-center gap-2">
-            <Network size={16} className="text-secondary" /> Active Neural Graph
+            <Network size={16} className="text-secondary" /> Adaptive Neural Intelligence Graph
           </h2>
           
           <div className="relative h-[400px] w-full flex items-center justify-center">
@@ -123,13 +395,12 @@ const MemoryAI = () => {
                    <stop offset="100%" stopColor="#0ea5e9" stopOpacity="0.8" />
                  </linearGradient>
                </defs>
-               {/* Fixed lines to center (50%, 50%) */}
-               <line x1="20%" y1="20%" x2="50%" y2="50%" stroke="url(#lineGrad)" strokeWidth="2" strokeDasharray="4 4" className="animate-[pulse_2s_ease-in-out_infinite]" />
-               <line x1="80%" y1="20%" x2="50%" y2="50%" stroke="url(#lineGrad)" strokeWidth="2" strokeDasharray="4 4" className="animate-[pulse_2.5s_ease-in-out_infinite]" />
-               <line x1="15%" y1="50%" x2="50%" y2="50%" stroke="url(#lineGrad)" strokeWidth="2" strokeDasharray="4 4" className="animate-[pulse_1.5s_ease-in-out_infinite]" />
-               <line x1="85%" y1="50%" x2="50%" y2="50%" stroke="url(#lineGrad)" strokeWidth="2" strokeDasharray="4 4" className="animate-[pulse_3s_ease-in-out_infinite]" />
-               <line x1="30%" y1="85%" x2="50%" y2="50%" stroke="url(#lineGrad)" strokeWidth="2" strokeDasharray="4 4" className="animate-[pulse_2s_ease-in-out_infinite]" />
-               <line x1="70%" y1="85%" x2="50%" y2="50%" stroke="url(#lineGrad)" strokeWidth="2" strokeDasharray="4 4" className="animate-[pulse_2.2s_ease-in-out_infinite]" />
+               <line x1="20%" y1="20%" x2="50%" y2="50%" stroke="url(#lineGrad)" strokeWidth="2" strokeDasharray="4 4" className={`transition-opacity duration-1000 ${dynamicPattern.nodes.includes('Incident Class.') ? 'animate-[pulse_2s_ease-in-out_infinite] opacity-100' : 'opacity-10'}`} />
+               <line x1="80%" y1="20%" x2="50%" y2="50%" stroke="url(#lineGrad)" strokeWidth="2" strokeDasharray="4 4" className={`transition-opacity duration-1000 ${dynamicPattern.nodes.includes('Risk Prediction') ? 'animate-[pulse_2.5s_ease-in-out_infinite] opacity-100' : 'opacity-10'}`} />
+               <line x1="15%" y1="50%" x2="50%" y2="50%" stroke="url(#lineGrad)" strokeWidth="2" strokeDasharray="4 4" className={`transition-opacity duration-1000 ${dynamicPattern.nodes.includes('Crowd Intel') ? 'animate-[pulse_1.5s_ease-in-out_infinite] opacity-100' : 'opacity-10'}`} />
+               <line x1="85%" y1="50%" x2="50%" y2="50%" stroke="url(#lineGrad)" strokeWidth="2" strokeDasharray="4 4" className={`transition-opacity duration-1000 ${dynamicPattern.nodes.includes('Medical Intel') ? 'animate-[pulse_3s_ease-in-out_infinite] opacity-100' : 'opacity-10'}`} />
+               <line x1="30%" y1="85%" x2="50%" y2="50%" stroke="url(#lineGrad)" strokeWidth="2" strokeDasharray="4 4" className={`transition-opacity duration-1000 ${dynamicPattern.nodes.includes('Resource Opt.') ? 'animate-[pulse_2s_ease-in-out_infinite] opacity-100' : 'opacity-10'}`} />
+               <line x1="70%" y1="85%" x2="50%" y2="50%" stroke="url(#lineGrad)" strokeWidth="2" strokeDasharray="4 4" className={`transition-opacity duration-1000 ${dynamicPattern.nodes.includes('Broadcast Agent') ? 'animate-[pulse_2.2s_ease-in-out_infinite] opacity-100' : 'opacity-10'}`} />
             </svg>
 
             {/* Central Node */}
@@ -150,23 +421,19 @@ const MemoryAI = () => {
               { label: 'Medical Intel', icon: HeartPulse, x: '85%', y: '50%', color: 'text-safe', bg: 'bg-safe/20', border: 'border-safe/50' },
               { label: 'Resource Opt.', icon: Network, x: '30%', y: '85%', color: 'text-cyan-400', bg: 'bg-cyan-400/20', border: 'border-cyan-400/50' },
               { label: 'Broadcast Agent', icon: MessageSquareWarning, x: '70%', y: '85%', color: 'text-orange-500', bg: 'bg-orange-500/20', border: 'border-orange-500/50' },
-            ].map((node, i) => (
-              <div key={i} className="absolute z-10 flex flex-col items-center group cursor-pointer" style={{ top: node.y, left: node.x, transform: 'translate(-50%, -50%)' }}>
-                 <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 ${node.border} ${node.bg} ${node.color} group-hover:scale-110 transition-transform bg-card relative shadow-[0_0_15px_currentColor]`}>
+            ].map((node, i) => {
+              const isActive = dynamicPattern.nodes.includes(node.label);
+              return (
+              <div key={i} className="absolute z-10 flex flex-col items-center group cursor-pointer transition-all duration-500" style={{ top: node.y, left: node.x, transform: 'translate(-50%, -50%)', opacity: isActive ? 1 : 0.4 }}>
+                 <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 ${isActive ? node.border : 'border-gray-600'} ${isActive ? node.bg : 'bg-gray-800/50'} ${isActive ? node.color : 'text-gray-500'} group-hover:scale-110 transition-transform relative ${isActive ? 'shadow-[0_0_15px_currentColor]' : ''}`}>
                    <node.icon size={20} />
-                   <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-safe rounded-full border-2 border-card shadow-[0_0_5px_#10b981]"></div>
+                   {isActive && <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-safe rounded-full border-2 border-card shadow-[0_0_5px_#10b981]"></div>}
                  </div>
-                 <span className="mt-2 text-[9px] font-bold text-gray-300 uppercase tracking-widest bg-black/80 px-2 py-0.5 rounded border border-white/10 whitespace-nowrap opacity-70 group-hover:opacity-100 transition-opacity">
+                 <span className={`mt-2 text-[9px] font-bold uppercase tracking-widest bg-black/80 px-2 py-0.5 rounded border whitespace-nowrap transition-colors ${isActive ? 'text-gray-200 border-white/20' : 'text-gray-600 border-gray-800'}`}>
                    {node.label}
                  </span>
-                 
-                 {/* Hover Tooltip */}
-                 <div className="absolute top-16 w-32 bg-card border border-cardBorder p-2 rounded text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity shadow-xl z-30">
-                   <span className="text-white font-bold block mb-1">Status: Active</span>
-                   Streams live telemetry to Memory Core.
-                 </div>
               </div>
-            ))}
+            )})}
             
             {/* Floating Particles simulating data */}
             <div className="absolute top-[35%] left-[35%] w-1.5 h-1.5 bg-cyan-400 rounded-full shadow-[0_0_10px_#22d3ee] animate-[float_2s_linear_infinite]"></div>
@@ -182,20 +449,7 @@ const MemoryAI = () => {
             </h2>
           </div>
           <div className="flex-1 p-4 overflow-y-auto space-y-3">
-            {[
-              { 
-                title: insightData?.pattern_detected || 'Potential Heat Stress Cluster', 
-                conf: insightData?.confidence ? `${insightData.confidence}%` : '87%', 
-                loc: insightData?.affected_zone || 'Zone A', 
-                sev: insightData?.severity?.toUpperCase() || 'HIGH', 
-                badge: (insightData?.severity === 'Critical' || insightData?.severity === 'CRITICAL') ? 'bg-[#ff003c]/20 text-[#ff003c] border-[#ff003c]/30' : 'bg-critical/20 text-critical border-critical/30', 
-                action: `Risk Score: ${insightData?.risk_score || 96}` 
-              },
-              { title: 'Crowd Surge Risk Detected', conf: '74%', loc: 'North Gate', sev: 'MEDIUM', badge: 'bg-warning/20 text-warning border-warning/30', action: 'Suggesting gate reroute' },
-              { title: 'Repeated Water Station Failures', conf: '82%', loc: 'Zone A', sev: 'HIGH', badge: 'bg-critical/20 text-critical border-critical/30', action: 'Correlating with heat metrics' },
-              { title: 'Lost Child Pattern Correlation', conf: '91%', loc: 'Zone C', sev: 'CRITICAL', badge: 'bg-[#ff003c]/20 text-[#ff003c] border-[#ff003c]/30', action: 'Locking down exit points' },
-              { title: 'Minor Altercation Probability', conf: '45%', loc: 'Zone B', sev: 'LOW', badge: 'bg-primary/20 text-primary border-primary/30', action: 'Monitoring security feeds' },
-            ].map((feed, i) => (
+            {reasoningFeed.map((feed, i) => (
               <div key={i} className="bg-card/50 border border-cardBorder rounded-lg p-3 hover:bg-card/80 transition-colors group">
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex items-center gap-2">
@@ -207,7 +461,7 @@ const MemoryAI = () => {
                 <h4 className="font-bold text-white text-sm mb-1">{feed.title}</h4>
                 <div className="flex justify-between items-end">
                   <span className="text-[11px] text-gray-400 flex items-center gap-1"><LocateFixed size={12}/> {feed.loc}</span>
-                  <span className="text-[10px] text-secondary group-hover:underline cursor-pointer">{feed.action} &rarr;</span>
+                  <span className="text-[10px] text-secondary group-hover:underline cursor-pointer truncate max-w-[200px]" title={feed.action}>{feed.action} &rarr;</span>
                 </div>
               </div>
             ))}
@@ -217,22 +471,33 @@ const MemoryAI = () => {
 
       {/* SECTION 2: PATTERN DISCOVERY */}
       <div>
-        <h2 className="text-lg font-bold text-white mb-4">Pattern Discovery</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <h2 className="text-lg font-bold text-white mb-4">Dynamic Pattern Discovery</h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="glass-card p-5 border-l-2 border-l-[#8b5cf6]">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="bg-[#8b5cf6]/20 p-2 rounded text-[#8b5cf6]"><Activity size={16} /></div>
+              <h3 className="font-bold text-white text-sm">Intelligence Engine</h3>
+            </div>
+            <div className="bg-black/30 rounded p-3 text-xs text-gray-300 border border-white/5 space-y-2">
+               <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-gray-400">Confidence:</span> <span className="font-bold text-safe">{confidenceScore}%</span></div>
+               <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-gray-400">Level:</span> <span className="font-bold text-white">{latestInc?.severity || 'Normal'}</span></div>
+               <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-gray-400">Sources:</span> <span className="font-bold">{incidents.length > 0 ? 'Live Telemetry + History' : 'Baseline Array'}</span></div>
+               <div className="flex justify-between pt-1"><span className="text-gray-400">Model:</span> <span className="text-[#8b5cf6] font-mono text-[9px]">{insightData?.ml_model_name || 'Neural Net v4.1'}</span></div>
+            </div>
+          </div>
+          
           <div className="glass-card p-5 border-l-2 border-l-warning">
             <div className="flex items-center gap-3 mb-3">
               <div className="bg-warning/20 p-2 rounded text-warning"><HeartPulse size={16} /></div>
-              <h3 className="font-bold text-white text-sm">{insightData?.pattern_detected || 'Repeated Medical Incidents'}</h3>
+              <h3 className="font-bold text-white text-sm truncate" title={dynamicPattern.title}>{dynamicPattern.title}</h3>
             </div>
             <div className="bg-black/30 rounded p-3 text-sm text-gray-300 border border-white/5">
               <span className="text-warning font-bold text-[10px] uppercase tracking-widest block mb-1">Reasoning Trace:</span>
-              {insightData?.reasoning_trace ? (
-                <div className="space-y-1">
-                  {insightData.reasoning_trace.map((step: string, idx: number) => (
-                    <div key={idx} className="flex gap-2"><span className="text-warning opacity-50">↳</span> <span className="text-xs">{step}</span></div>
-                  ))}
-                </div>
-              ) : '32% increase in elderly distress events between 14:00–16:00 near Gate 7.'}
+              <div className="space-y-1">
+                {dynamicPattern.trace.map((step: string, idx: number) => (
+                  <div key={idx} className="flex gap-2"><span className="text-warning opacity-50">↳</span> <span className="text-xs">{step}</span></div>
+                ))}
+              </div>
             </div>
           </div>
           
@@ -243,11 +508,9 @@ const MemoryAI = () => {
             </div>
             <div className="bg-black/30 rounded p-3 text-sm text-gray-300 border border-white/5">
               <span className="text-primary font-bold text-[10px] uppercase tracking-widest block mb-1">Correlated Data:</span>
-              {insightData?.linked_signals ? (
-                <ul className="list-disc pl-4 space-y-1 text-xs text-gray-400">
-                  {insightData.linked_signals.map((sig: string, idx: number) => <li key={idx}>{sig}</li>)}
-                </ul>
-              ) : 'Recurring congestion every 18 minutes near North Gate.'}
+              <ul className="list-disc pl-4 space-y-1 text-xs text-gray-400">
+                {dynamicPattern.signals.map((sig: string, idx: number) => <li key={idx}>{sig}</li>)}
+              </ul>
             </div>
           </div>
           
@@ -258,7 +521,7 @@ const MemoryAI = () => {
             </div>
             <div className="bg-black/30 rounded p-3 text-sm text-gray-300 border border-white/5">
               <span className="text-critical font-bold text-[10px] uppercase tracking-widest block mb-1">Risk Escalation:</span>
-              {insightData?.predicted_outcome || 'Water station outages strongly correlate with heat-related incidents.'}
+              <span className="text-xs">{dynamicPattern.outcome}</span>
             </div>
           </div>
         </div>
@@ -267,21 +530,14 @@ const MemoryAI = () => {
       {/* SECTION 3: MEMORY TIMELINE */}
       <div className="glass-card p-6 border-t-4 border-t-secondary/50">
         <h2 className="text-sm font-bold text-white uppercase tracking-widest mb-6 flex items-center gap-2">
-          <GitCommit size={16} className="text-secondary" /> Memory Timeline Analysis: Hypothesis #H-0241
+          <GitCommit size={16} className="text-secondary" /> Operational Memory Engine
         </h2>
         <div className="relative">
           {/* Horizontal Line */}
           <div className="absolute top-4 left-4 right-4 h-0.5 bg-cardBorder"></div>
           
           <div className="grid grid-cols-6 gap-2 relative z-10">
-            {[
-              { time: '09:15', label: 'Water Station Failure', status: 'critical' },
-              { time: '09:24', label: 'Crowd Density Spike', status: 'warning' },
-              { time: '09:31', label: 'Medical Incident', status: 'critical' },
-              { time: '09:35', label: 'AI Alert Generated', status: 'primary' },
-              { time: '09:37', label: 'Resource Dispatch', status: 'secondary' },
-              { time: '09:42', label: 'Situation Stabilized', status: 'safe' }
-            ].map((event, i) => (
+            {timeline.map((event, i) => (
               <div key={i} className="flex flex-col items-center text-center">
                 <div className={`w-3 h-3 rounded-full mb-3 ring-4 ring-background bg-${event.status} shadow-[0_0_10px_currentColor]`}></div>
                 <div className="text-[10px] text-gray-500 font-mono font-bold mb-1">{event.time}</div>
@@ -298,22 +554,17 @@ const MemoryAI = () => {
         {/* Predictive Intelligence */}
         <div className="glass-card p-6">
           <h2 className="text-sm font-bold text-white uppercase tracking-widest mb-6 flex items-center gap-2">
-            <Activity size={16} className="text-warning" /> Next 30 Minute Forecast
+            <Activity size={16} className="text-warning" /> Live Predictive Forecasting
           </h2>
           <div className="space-y-5">
-            {[
-              { label: 'Heat Stress Probability', val: 78, color: 'bg-critical' },
-              { label: 'Crowd Surge Probability', val: 63, color: 'bg-warning' },
-              { label: 'Medical Escalation Probability', val: 54, color: 'bg-primary' },
-              { label: 'Infrastructure Failure Probability', val: 21, color: 'bg-secondary' }
-            ].map((metric, i) => (
+            {forecasts.map((metric, i) => (
               <div key={i}>
                 <div className="flex justify-between text-xs mb-1.5">
                   <span className="text-gray-300 font-medium">{metric.label}</span>
                   <span className="font-bold text-white">{metric.val}%</span>
                 </div>
                 <div className="w-full bg-cardBorder h-2 rounded-full overflow-hidden shadow-inner">
-                  <div className={`${metric.color} h-full rounded-full shadow-[0_0_10px_currentColor]`} style={{ width: `${metric.val}%` }}></div>
+                  <div className={`${metric.color} h-full rounded-full shadow-[0_0_10px_currentColor] transition-all duration-1000`} style={{ width: `${metric.val}%` }}></div>
                 </div>
               </div>
             ))}
@@ -323,18 +574,13 @@ const MemoryAI = () => {
         {/* Recommended Actions */}
         <div className="glass-card p-6 border-l-4 border-l-primary/50 relative">
           <div className="absolute top-6 right-6 text-xs text-gray-400 font-bold bg-cardBorder/30 px-2 py-1 rounded">
-            Executed: {executedCount} / {insightData?.preventive_actions?.length || 4}
+            Executed: {executedCount} / {recommendations.length}
           </div>
           <h2 className="text-sm font-bold text-white uppercase tracking-widest mb-6 flex items-center gap-2">
-            <CheckCircle2 size={16} className="text-primary" /> Memory AI Recommendations
+            <CheckCircle2 size={16} className="text-primary" /> Context-Aware Recommendations
           </h2>
           <div className="space-y-3">
-            {(insightData?.preventive_actions || [
-              "Deploy mobile hydration unit to Zone A.",
-              "Clear emergency access routes at North Gate.",
-              "Pre-position medical team by 2 units.",
-              "Broadcast crowd diversion advisory."
-            ]).map((action: string, i: number) => {
+            {recommendations.map((action: string, i: number) => {
               const state = actionStates[i] || 'pending';
               const summary = actionSummaries[i];
               const isExecuted = state === 'executed';

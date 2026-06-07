@@ -51,6 +51,50 @@ export const getResources = async () => {
     return null;
   }
 };
+export const dispatchResource = async (payload: { id: string; task: string; location: string; incident_id?: string }) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/resources/dispatch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error('Network response was not ok');
+    return await response.json();
+  } catch (error) {
+    console.error('Error dispatching resource:', error);
+    return null;
+  }
+};
+
+export const updateIncidentStatus = async (id: string, status: string) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/incidents/update_status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status }),
+    });
+    if (!response.ok) throw new Error('Network response was not ok');
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating incident status:', error);
+    return null;
+  }
+};
+
+export const createIncident = async (incidentData: any) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/incidents/create`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(incidentData),
+    });
+    if (!response.ok) throw new Error('Network response was not ok');
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating incident:', error);
+    return null;
+  }
+};
 
 export const getIncidents = async () => {
   try {

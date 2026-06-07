@@ -82,3 +82,14 @@ def update_resource(resource_id: str, data: Dict[str, Any]) -> Optional[Dict[str
     except Exception as e:
         logger.warning(f"Supabase update_resource failed: {e}")
         return None
+
+def update_incident(incident_id: str, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    supabase = get_supabase()
+    if not supabase:
+        return None
+    try:
+        response = supabase.table("incidents").update(data).eq("id", incident_id).execute()
+        return response.data[0] if response.data else None
+    except Exception as e:
+        logger.warning(f"Supabase update_incident failed: {e}")
+        return None
