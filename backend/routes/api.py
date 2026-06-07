@@ -78,46 +78,144 @@ def save_alert_api(request: AlertSaveRequest):
 # ---------------------------------------------------------
 # New Data-Driven GET Endpoints (Supabase with JSON fallback)
 # ---------------------------------------------------------
+@router.post("/resources/seed")
+def seed_resources_api():
+    existing = supabase_service.fetch_resources()
+    if existing and len(existing) >= 20:
+        return {"success": True, "message": "Resources already seeded"}
+        
+    existing_names = [res.get("name") for res in (existing or []) if res.get("name")]
+        
+    import datetime
+    now_str = datetime.datetime.utcnow().isoformat()
+    
+    seed_data = []
+    
+    # Ambulances (10 units)
+    amb_locations = ["Medical Camp", "Gate 7", "Zone A", "Gate 3", "Food Court", "Medical Camp", "Zone C", "North Gate", "Water Station", "Parking Area"]
+    amb_status = ["AVAILABLE", "AVAILABLE", "AVAILABLE", "DEPLOYED", "BUSY", "AVAILABLE", "AVAILABLE", "AVAILABLE", "AVAILABLE", "AVAILABLE"]
+    for i in range(10):
+        seed_data.append({
+            "name": f"Ambulance {i+1:02d}",
+            "type": "Ambulance",
+            "status": amb_status[i],
+            "location": amb_locations[i]
+        })
+        
+    # Medical Teams (8 units)
+    med_locations = ["Medical Camp", "Gate 7", "Zone A", "Food Court", "North Gate", "Water Station", "Medical Camp", "Zone C"]
+    for i in range(8):
+        seed_data.append({
+            "name": f"Medical Team {i+1:02d}",
+            "type": "Medical Team",
+            "status": "AVAILABLE",
+            "location": med_locations[i]
+        })
+        
+    # Security Units (12 units)
+    sec_status = ["AVAILABLE"] * 10 + ["DEPLOYED", "BUSY"]
+    for i in range(12):
+        seed_data.append({
+            "name": f"Security Unit {i+1:02d}",
+            "type": "Security Unit",
+            "status": sec_status[i],
+            "location": "Control Center"
+        })
+        
+    # Fire Units (4 units)
+    for i in range(4):
+        seed_data.append({
+            "name": f"Fire Unit {i+1:02d}",
+            "type": "Fire Unit",
+            "status": "AVAILABLE",
+            "location": "Fire Station"
+        })
+        
+    # Volunteer Teams (8 units)
+    for i in range(8):
+        seed_data.append({
+            "name": f"Volunteer Team {i+1:02d}",
+            "type": "Volunteer Team",
+            "status": "AVAILABLE",
+            "location": "Volunteer Camp"
+        })
+        
+    # Drone Units (2 units)
+    for i in range(2):
+        seed_data.append({
+            "name": f"Drone Unit {i+1:02d}",
+            "type": "Drone Unit",
+            "status": "AVAILABLE",
+            "location": "Control Center"
+        })
+        
+    # Water Tankers (4 units)
+    for i in range(4):
+        seed_data.append({
+            "name": f"Water Tanker {i+1:02d}",
+            "type": "Water Tanker",
+            "status": "AVAILABLE",
+            "location": "Water Station"
+        })
+        
+    # Command Vehicles (2 units)
+    for i in range(2):
+        seed_data.append({
+            "name": f"Command Vehicle {i+1:02d}",
+            "type": "Command Vehicle",
+            "status": "AVAILABLE",
+            "location": "Control Center"
+        })
+        
+    to_insert = [item for item in seed_data if item["name"] not in existing_names]
+    
+    if len(to_insert) > 0:
+        result = supabase_service.insert_resources(to_insert)
+        if result:
+            return {"success": True, "message": f"Resources seeded successfully ({len(to_insert)} added)"}
+        return {"success": False, "message": "Failed to seed resources"}
+    return {"success": True, "message": "Resources already seeded"}
+
 @router.post("/resources/dispatch")
 def dispatch_resource_api(request: ResourceDispatchRequest):
+    print(f"Backend request received: {request.dict()}")
     resources = supabase_service.fetch_resources()
     if not resources:
         resources = get_resources()
     
     updated = False
     for res in resources:
-        if str(res.get("id")) == str(request.id):
+        if str(res.get("id")) == str(request.resource_id):
             res["status"] = "DEPLOYED"
-            res["task"] = request.task
             res["location"] = request.location
-            res["assignment"] = request.task
             incident_id_val = request.incident_id
             if request.incident_id and str(request.incident_id).isdigit():
                 incident_id_val = int(request.incident_id)
                 
             if request.incident_id:
                 res["assigned_incident_id"] = incident_id_val
+                res["assigned_incident_title"] = request.incident_title
             updated = True
             
             # Update Supabase
             try:
-                supabase_service.update_resource(str(res.get("id")), {
+                payload = {
                     "status": "DEPLOYED",
-                    "task": request.task,
                     "location": request.location,
-                    "assignment": request.task,
                     "assigned_incident_id": incident_id_val,
-                    "assigned_incident_title": request.task
-                })
-            except Exception:
-                pass
+                    "assigned_incident_title": request.incident_title
+                }
+                response = supabase_service.update_resource(str(res.get("id")), payload)
+                print(f"Dispatch response: {response}")
+            except Exception as e:
+                print(f"Dispatch error: {e}")
                 
             break
             
     if updated:
         # Save back to JSON as fallback persistence
         save_json("resources.json", resources)
-        return {"status": "success", "message": f"Resource {request.id} dispatched"}
+        return {"status": "success", "message": f"Resource {request.resource_id} dispatched"}
     return {"status": "error", "message": "Resource not found"}
 
 @router.post("/incidents/create")
@@ -210,6 +308,10 @@ def update_incident_status_api(request: IncidentStatusUpdateRequest):
         
         # Free resources if RESOLVED
         if request.status == "RESOLVED":
+            # Attempt Supabase native release first
+            supabase_service.release_resources_for_incident(str(request.id))
+            
+            # Fallback for local JSON
             resources = supabase_service.fetch_resources()
             if not resources:
                 resources = get_resources()
@@ -217,45 +319,16 @@ def update_incident_status_api(request: IncidentStatusUpdateRequest):
             res_updated = False
             for res in resources:
                 should_release = False
-                
-                if str(res.get("assigned_incident_id", "")) == str(request.id):
+                if str(res.get("assigned_incident_id", "")) == str(request.id) or str(res.get("assignment", "")) == str(request.id):
                     should_release = True
-                elif res.get("status") != "Available":
-                    # Fallback fuzzy match
-                    task_str = str(res.get("task", "")).lower()
-                    assign_str = str(res.get("assignment", "")).lower()
-                    loc_str = str(res.get("location", "")).lower()
-                    inc_id_str = str(request.id).lower()
-                    
-                    target_inc = next((i for i in incidents if str(i.get("id")) == str(request.id)), None)
-                    if target_inc:
-                        inc_loc = str(target_inc.get("location", target_inc.get("zone", ""))).lower()
-                        inc_title = str(target_inc.get("title", "")).lower()
-                        
-                        if (inc_id_str in task_str or inc_id_str in assign_str or 
-                            (inc_loc and (inc_loc in task_str or inc_loc in assign_str or inc_loc in loc_str)) or 
-                            (inc_title and (inc_title in task_str or inc_title in assign_str))):
-                            should_release = True
                         
                 if should_release:
                     res["status"] = "AVAILABLE"
-                    res["task"] = "Unassigned"
-                    res["assignment"] = "Unassigned"
+                    res["task"] = None
+                    res["assignment"] = None
                     res["assigned_incident_id"] = None
                     res["assigned_incident_title"] = None
                     res_updated = True
-                    
-                    # Update Supabase
-                    try:
-                        supabase_service.update_resource(str(res.get("id")), {
-                            "status": "AVAILABLE",
-                            "task": "Unassigned",
-                            "assignment": "Unassigned",
-                            "assigned_incident_id": None,
-                            "assigned_incident_title": None
-                        })
-                    except Exception:
-                        pass
                         
             if res_updated:
                 save_json("resources.json", resources)

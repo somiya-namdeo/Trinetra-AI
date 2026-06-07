@@ -68,8 +68,22 @@ export const getResources = async () => {
     return null;
   }
 };
-export const dispatchResource = async (payload: { id: string; task: string; location: string; incident_id?: string }) => {
+
+export const seedResources = async () => {
   try {
+    const response = await fetch(`${API_BASE_URL}/api/resources/seed`, {
+      method: 'POST',
+    });
+    if (!response.ok) throw new Error('Network response was not ok');
+    return await response.json();
+  } catch (error) {
+    console.error('Error seeding resources:', error);
+    return null;
+  }
+};
+export const dispatchResource = async (payload: { resource_id: string | number; location: string; incident_id?: string | number; incident_title?: string }) => {
+  try {
+    console.log("Dispatch payload:", payload);
     const response = await fetch(`${API_BASE_URL}/api/resources/dispatch`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

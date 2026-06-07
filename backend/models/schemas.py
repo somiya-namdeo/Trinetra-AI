@@ -23,10 +23,10 @@ class AlertSaveRequest(BaseModel):
     updated_at: Optional[str] = None
 
 class ResourceDispatchRequest(BaseModel):
-    id: str
-    task: str
+    resource_id: Union[str, int]
     location: str
-    incident_id: Optional[str] = None
+    incident_id: Optional[Union[str, int]] = None
+    incident_title: Optional[str] = None
 
 class IncidentStatusUpdateRequest(BaseModel):
     id: Union[str, int]

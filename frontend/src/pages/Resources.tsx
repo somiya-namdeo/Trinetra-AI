@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Network, Zap, Truck, ShieldAlert, HeartPulse, Shield, Thermometer, Loader2, CheckCircle2, TrendingUp, AlertTriangle, ArrowRight, Flame, Radio, Users } from 'lucide-react';
-import { getResources, getIncidents } from '../services/api';
+import { getResources, getIncidents, seedResources, dispatchResource } from '../services/api';
 
 const Resources = () => {
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -23,15 +23,7 @@ const Resources = () => {
   
   // Track assigned state for individual actions/resources
   const [assignedResources, setAssignedResources] = useState<Record<string, boolean>>({});
-  const initialMocks = [
-    { id: 'u1', name: 'Ambulance 01', type: 'AMB-01', status: 'Deployed', location: 'Gate 7', eta: 'On site', assignment: 'INC-2840', fit: 82, isRecommended: false },
-    { id: 'u2', name: 'Ambulance 02', type: 'AMB-02', status: 'Available', location: 'Base', eta: '3 min', assignment: 'None', fit: 96, isRecommended: true, recommendFor: 'Elderly collapse near Gate 7' },
-    { id: 'u3', name: 'Medical Team Alpha', type: 'MED-01', status: 'Deployed', location: 'Zone A', eta: 'On site', assignment: 'INC-2841', fit: 75, isRecommended: false },
-    { id: 'u4', name: 'Medical Team Bravo', type: 'MED-02', status: 'Available', location: 'Zone B', eta: '4 min', assignment: 'None', fit: 94, isRecommended: true, recommendFor: 'Heat Stress Cluster — Zone A' },
-    { id: 'u5', name: 'Security Unit 01', type: 'SEC-01', status: 'Deployed', location: 'North Gate', eta: 'On site', assignment: 'INC-2838', fit: 88, isRecommended: false },
-    { id: 'u6', name: 'Security Unit 02', type: 'SEC-02', status: 'Available', location: 'Gate 7', eta: '2 min', assignment: 'None', fit: 91, isRecommended: true, recommendFor: 'Minor crowd surge near Gate 3' },
-  ];
-  const [fieldUnits, setFieldUnits] = useState<any[]>(initialMocks);
+  const [fieldUnits, setFieldUnits] = useState<any[]>([]);
 
   const calculateFitScore = (unit: any, targetDemand: string) => {
     let etaScore = 0;
@@ -74,7 +66,7 @@ const Resources = () => {
     let capScore = 0;
     const cap = String(unit.capacity || 'N/A').toLowerCase();
     if (cap === 'n/a' || cap === '0') {
-      const hash = unit.id.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
+      const hash = String(unit.id).split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
       capScore = hash % 2 === 0 ? 100 : 70;
     } else {
        const num = parseInt(cap);
@@ -200,89 +192,91 @@ const Resources = () => {
     return updatedUnits;
   };
 
-  useEffect(() => {
-    const fetchResources = async () => {
-      setLoading(true);
-      const [data, incidents] = await Promise.all([getResources(), getIncidents()]);
-      
-      let rawResources = data;
-      if (!rawResources || !Array.isArray(rawResources) || rawResources.length === 0) {
-        rawResources = initialMocks;
-      }
-      
-      if (rawResources.length > 0) {
-        const mappedData = rawResources.map((unit: any, idx: number) => {
-           const fallbackUnit = initialMocks[idx] || {};
-           
-           const safeName = unit.name || fallbackUnit.name || "Unnamed Resource";
-           const safeType = unit.type || fallbackUnit.type || "General Resource";
-           const safeStatus = unit.status || fallbackUnit.status || "Available";
-           const safeLocation = unit.location || unit.zone || fallbackUnit.location || "Standby Base";
-           const safeEta = unit.eta_minutes !== undefined && unit.eta_minutes !== null ? (unit.eta_minutes === 0 ? ((safeStatus || '').toUpperCase() === 'AVAILABLE' ? 'Available now' : 'On site') : `${unit.eta_minutes} min`) : (unit.eta || fallbackUnit.eta || "Available now");
-           let safeTask = unit.assigned_incident_id || unit.task || fallbackUnit.assignment || "Unassigned";
-           let safeFit = unit.bestFit || fallbackUnit.fit || 75;
-           let safeCapacity = unit.capacity ?? "N/A";
-           
-           const nameLower = safeName.toLowerCase();
-           const typeLower = safeType.toLowerCase();
-           
-           if (nameLower.includes('fire') || typeLower.includes('fire')) {
-             if (safeCapacity === 'N/A') safeCapacity = 6;
-             safeFit = safeFit === 75 ? 80 : safeFit;
-           } else if (nameLower.includes('drone') || typeLower.includes('drone')) {
-             if (safeCapacity === 'N/A') safeCapacity = 1;
-             if (safeTask === 'Unassigned') safeTask = 'Surveillance / Unassigned';
-             safeFit = safeFit === 75 ? 70 : safeFit;
-           } else if (nameLower.includes('volunteer') || typeLower.includes('volunteer')) {
-             if (safeCapacity === 'N/A') safeCapacity = 8;
-             if (safeTask === 'Unassigned') safeTask = 'Crowd Support / Unassigned';
-             safeFit = safeFit === 75 ? 75 : safeFit;
-           } else if (nameLower.includes('command') || typeLower.includes('command')) {
-             if (safeCapacity === 'N/A') safeCapacity = 8;
-             if (safeTask === 'Unassigned') safeTask = 'Coordination / Unassigned';
-             safeFit = safeFit === 75 ? 85 : safeFit;
-           }
-
-           let recommendFor = fallbackUnit.recommendFor || 'Standby';
-           if ((safeStatus || '').toUpperCase() === 'AVAILABLE' && incidents && incidents.length > 0) {
-             const activeIncs = incidents.filter((i: any) => ['ACTIVE', 'RESOURCES_ASSIGNED', 'IN_PROGRESS', 'CONTAINED'].includes((i.status || '').toUpperCase()));
-             if (activeIncs.length > 0) {
-               const targetInc = activeIncs[idx % activeIncs.length];
-               let score = 70;
-               if (targetInc.category?.includes('Medical') && typeLower.includes('medical')) score += 15;
-               if (targetInc.category?.includes('Fire') && typeLower.includes('fire')) score += 15;
-               if (targetInc.zone === safeLocation || targetInc.location === safeLocation) score += 10;
-               const etaNum = unit.eta_minutes || 0;
-               if (etaNum < 5) score += 5;
-               else if (etaNum < 15) score += 2;
-               safeFit = Math.min(score, 99);
-               recommendFor = `${targetInc.category} — ${targetInc.location || targetInc.zone}`;
-             }
-           } else if ((safeStatus || '').toUpperCase() !== 'AVAILABLE') {
-             recommendFor = 'Standby';
-           }
-
-           return { 
-               ...unit,
-               id: unit.id || fallbackUnit.id || `res-${idx}`,
-               name: safeName,
-               type: safeType,
-               status: safeStatus,
-               location: safeLocation,
-               capacity: safeCapacity,
-               eta: safeEta,
-               assignment: safeTask,
-               fit: safeFit,
-               isRecommended: (safeStatus || '').toUpperCase() === 'AVAILABLE' && safeFit > 80,
-               recommendFor: recommendFor
-           };
-        });
-        const finalUnits = generateDeploymentPlan(optScenario, mappedData);
-        setFieldUnits(finalUnits);
-      }
+  const fetchResourcesData = async () => {
+    setLoading(true);
+    const [data, incidents] = await Promise.all([getResources(), getIncidents()]);
+    
+    let rawResources = data;
+    if (!rawResources || !Array.isArray(rawResources) || rawResources.length === 0) {
+      setFieldUnits([]);
       setLoading(false);
-    };
-    fetchResources();
+      return;
+    }
+    
+    if (rawResources.length > 0) {
+      const mappedData = rawResources.map((unit: any, idx: number) => {
+         
+         const safeName = unit.resource_name || unit.name || "Unnamed Resource";
+         const safeType = unit.resource_type || unit.type || "General Resource";
+         const safeStatus = unit.status || "Available";
+         const safeLocation = unit.location || unit.zone || "Standby Base";
+         const safeEta = unit.eta_minutes !== undefined && unit.eta_minutes !== null ? (unit.eta_minutes === 0 ? ((safeStatus || '').toUpperCase() === 'AVAILABLE' ? 'Available now' : 'On site') : `${unit.eta_minutes} min`) : (unit.eta || "Available now");
+         let safeTask = unit.assigned_incident_title || unit.assigned_incident_id || unit.assignment || unit.task || "Unassigned";
+         let safeFit = unit.bestFit || 75;
+         let safeCapacity = unit.capacity ?? "N/A";
+         
+         const nameLower = safeName.toLowerCase();
+         const typeLower = safeType.toLowerCase();
+         
+         if (nameLower.includes('fire') || typeLower.includes('fire')) {
+           if (safeCapacity === 'N/A') safeCapacity = 6;
+           safeFit = safeFit === 75 ? 80 : safeFit;
+         } else if (nameLower.includes('drone') || typeLower.includes('drone')) {
+           if (safeCapacity === 'N/A') safeCapacity = 1;
+           if (safeTask === 'Unassigned') safeTask = 'Surveillance / Unassigned';
+           safeFit = safeFit === 75 ? 70 : safeFit;
+         } else if (nameLower.includes('volunteer') || typeLower.includes('volunteer')) {
+           if (safeCapacity === 'N/A') safeCapacity = 8;
+           if (safeTask === 'Unassigned') safeTask = 'Crowd Support / Unassigned';
+           safeFit = safeFit === 75 ? 75 : safeFit;
+         } else if (nameLower.includes('command') || typeLower.includes('command')) {
+           if (safeCapacity === 'N/A') safeCapacity = 8;
+           if (safeTask === 'Unassigned') safeTask = 'Coordination / Unassigned';
+           safeFit = safeFit === 75 ? 85 : safeFit;
+         }
+
+         let recommendFor = 'Standby';
+         if ((safeStatus || '').toUpperCase() === 'AVAILABLE' && incidents && incidents.length > 0) {
+           const activeIncs = incidents.filter((i: any) => ['ACTIVE', 'RESOURCES_ASSIGNED', 'IN_PROGRESS', 'CONTAINED'].includes((i.status || '').toUpperCase()));
+           if (activeIncs.length > 0) {
+             const targetInc = activeIncs[idx % activeIncs.length];
+             let score = 70;
+             if (targetInc.category?.includes('Medical') && typeLower.includes('medical')) score += 15;
+             if (targetInc.category?.includes('Fire') && typeLower.includes('fire')) score += 15;
+             if (targetInc.zone === safeLocation || targetInc.location === safeLocation) score += 10;
+             const etaNum = unit.eta_minutes || 0;
+             if (etaNum < 5) score += 5;
+             else if (etaNum < 15) score += 2;
+             safeFit = Math.min(score, 99);
+             recommendFor = `${targetInc.category} — ${targetInc.location || targetInc.zone}`;
+           }
+         } else if ((safeStatus || '').toUpperCase() !== 'AVAILABLE') {
+           recommendFor = 'Standby';
+         }
+
+         return { 
+             ...unit,
+             id: unit.id || `res-${idx}`,
+             name: safeName,
+             type: safeType,
+             status: safeStatus,
+             location: safeLocation,
+             capacity: safeCapacity,
+             eta: safeEta,
+             assignment: safeTask,
+             fit: safeFit,
+             isRecommended: (safeStatus || '').toUpperCase() === 'AVAILABLE' && safeFit > 80,
+             recommendFor: recommendFor
+         };
+      });
+      const finalUnits = generateDeploymentPlan(optScenario, mappedData);
+      setFieldUnits(finalUnits);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchResourcesData();
   }, []);
 
   const handleOptimize = () => {
@@ -304,65 +298,59 @@ const Resources = () => {
     }, 1500);
   };
 
-  const handleAssign = (id: string, isPlanAction = false, planText = '', forceZone = '') => {
+  const handleAssign = async (id: string, isPlanAction = false, planText = '', forceZone = '') => {
     setAssignedResources(prev => ({ ...prev, [id]: true }));
     
+    let newLoc = forceZone;
+    let assignmentText = 'INC-AUTO';
+    let targetUnit = null;
+    
     if (isPlanAction) {
-      setShowToast({ show: true, message: '✓ Action Executed Successfully' });
-      
       const unitMatch = fieldUnits.find(u => planText.includes(u.name));
       if (unitMatch) {
+         targetUnit = unitMatch;
+         newLoc = planText.split(' to ')[1] || planText.split(' near ')[1] || unitMatch.location;
          setAssignedResources(prev => ({ ...prev, [unitMatch.id]: true }));
-         setFieldUnits(prev => prev.map(u => {
-           if (u.id === unitMatch.id) {
-             const newLoc = planText.split(' to ')[1] || planText.split(' near ')[1] || u.location;
-             return {
-               ...u,
-               status: 'Deployed',
-               eta: 'On site',
-               assignment: 'INC-AUTO',
-               location: newLoc
-             };
-           }
-           return u;
-         }));
       }
     } else {
       const unit = fieldUnits.find(u => u.id === id);
       if (unit) {
-        const isDeploy = (unit.status || '').toUpperCase() === 'AVAILABLE';
-        setShowToast({ show: true, message: isDeploy ? 'Resource deployed successfully.' : `Resource reassigned to ${forceZone || 'new zone'}.` });
-        
-        setFieldUnits(prev => prev.map(u => {
-          if (u.id === id) {
-            let newLoc = forceZone || u.location;
-            if (!forceZone && u.recommendFor && u.recommendFor !== 'Standby') {
-              const parts = u.recommendFor.split(' — ');
-              newLoc = parts.length > 1 ? parts[1] : parts[0];
-            }
-            return {
-              ...u,
-              status: 'Deployed',
-              eta: 'On site',
-              assignment: 'INC-AUTO',
-              location: newLoc
-            };
-          }
-          return u;
-        }));
+        targetUnit = unit;
+        newLoc = forceZone || unit.location;
+        if (!forceZone && unit.recommendFor && unit.recommendFor !== 'Standby') {
+          const parts = unit.recommendFor.split(' — ');
+          newLoc = parts.length > 1 ? parts[1] : parts[0];
+          assignmentText = parts[0];
+        }
       }
+    }
+    
+    if (targetUnit) {
+       await dispatchResource({
+         resource_id: targetUnit.id,
+         incident_title: assignmentText,
+         location: newLoc
+       });
+       await fetchResourcesData();
+       setShowToast({ show: true, message: isPlanAction ? '✓ Action Executed Successfully' : 'Resource deployed successfully.' });
     }
     
     setTimeout(() => setShowToast({ show: false, message: '' }), 3000);
   };
 
+  const handleSeed = async () => {
+    setLoading(true);
+    await seedResources();
+    await fetchResourcesData();
+  };
+
   const getResourceCounts = (typeStr: string, fallbackDeployed: number, fallbackTotal: number) => {
     const units = fieldUnits.filter(u => u.type?.toLowerCase().includes(typeStr) || u.name?.toLowerCase().includes(typeStr));
     if (units.length > 0) {
-      const deployed = units.filter(u => u.status?.toLowerCase() === 'deployed' || u.status?.toLowerCase() === 'busy' || u.status?.toLowerCase() === 'assigned').length;
-      return { current: deployed, total: units.length };
+      const deployed = units.filter(u => u.status?.toLowerCase() === 'deployed' || u.status?.toLowerCase() === 'busy').length;
+      return { current: units.length - deployed, total: units.length };
     }
-    return { current: fallbackDeployed, total: fallbackTotal };
+    return { current: fallbackTotal - fallbackDeployed, total: fallbackTotal };
   };
 
   const predictedDemands = [
@@ -392,12 +380,17 @@ const Resources = () => {
         </div>
       )}
 
-      <div>
-        <h1 className="text-2xl font-bold text-white mb-1 flex items-center gap-3">
-          Resource Coordination
-          {loading && <Loader2 size={16} className="text-primary animate-spin" />}
-        </h1>
-        <p className="text-sm text-gray-400">Live status of all field units and team assignments.</p>
+      <div className="flex justify-between items-end">
+        <div>
+          <h1 className="text-2xl font-bold text-white mb-1 flex items-center gap-3">
+            Resource Coordination
+            {loading && <Loader2 size={16} className="text-primary animate-spin" />}
+          </h1>
+          <p className="text-sm text-gray-400">Live status of all field units and team assignments.</p>
+        </div>
+        <button onClick={handleSeed} className="text-xs bg-cardBorder text-gray-300 px-3 py-1.5 rounded hover:bg-white/10 transition-colors">
+          Seed Resources
+        </button>
       </div>
 
       {/* Top Row: AI Optimizer & Load Balance */}

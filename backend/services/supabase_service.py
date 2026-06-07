@@ -104,3 +104,45 @@ def update_incident(incident_id: str, data: Dict[str, Any]) -> Optional[Dict[str
     except Exception as e:
         logger.warning(f"Supabase update_incident failed: {e}")
         return None
+
+def insert_resources(resources: List[Dict[str, Any]]) -> Optional[List[Dict[str, Any]]]:
+    supabase = get_supabase()
+    if not supabase:
+        return None
+    try:
+        response = supabase.table("resources").insert(resources).execute()
+        return response.data
+    except Exception as e:
+        logger.warning(f"Supabase insert_resources failed: {e}")
+        print(f"DEBUG ERROR insert_resources: {e}")
+        return None
+
+def release_resources_for_incident(incident_id: str) -> bool:
+    supabase = get_supabase()
+    if not supabase:
+        return False
+    import datetime
+    try:
+        now_str = datetime.datetime.utcnow().isoformat()
+        
+        # Match by assigned_incident_id directly as strings (or int if possible)
+        # Assuming incident_id could be stored in assigned_incident_title or assigned_incident_id
+        response = None
+        if incident_id and str(incident_id).isdigit():
+            response = supabase.table("resources").update({
+                "status": "AVAILABLE",
+                "assigned_incident_id": None,
+                "assigned_incident_title": None
+            }).eq("assigned_incident_id", int(incident_id)).execute()
+        else:
+            response = supabase.table("resources").update({
+                "status": "AVAILABLE",
+                "assigned_incident_id": None,
+                "assigned_incident_title": None
+            }).eq("assigned_incident_title", str(incident_id)).execute()
+            
+        print(f"Release response: {response}")
+        return True
+    except Exception as e:
+        logger.warning(f"Supabase release_resources_for_incident failed: {e}")
+        return False

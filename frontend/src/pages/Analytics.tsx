@@ -142,15 +142,19 @@ const Analytics = () => {
 
       if (resources && Array.isArray(resources)) {
         const getCounts = (typeStr: string, fallbackCurrent: number, fallbackTotal: number) => {
-          const units = resources.filter((u: any) => (u.type || '').toLowerCase().includes(typeStr) || (u.name || '').toLowerCase().includes(typeStr));
+          const units = resources.filter((u: any) => (u.resource_type || u.type || '').toLowerCase().includes(typeStr) || (u.resource_name || u.name || '').toLowerCase().includes(typeStr));
           if (units.length > 0) {
             const current = units.filter((u: any) => {
               const s = (u.status || '').toLowerCase();
-              return s === 'deployed' || s === 'busy' || s === 'assigned';
+              return s === 'deployed' || s === 'busy';
             }).length;
-            return { current, total: units.length };
+            const available = units.filter((u: any) => {
+              const s = (u.status || '').toLowerCase();
+              return s === 'available';
+            }).length;
+            return { current, available };
           }
-          return { current: fallbackCurrent, total: fallbackTotal };
+          return { current: fallbackCurrent, available: fallbackTotal - fallbackCurrent };
         };
 
         const amb = getCounts('amb', 4, 8);
@@ -160,11 +164,11 @@ const Analytics = () => {
         const vol = getCounts('volunteer', 6, 10);
 
         setResourceData([
-          { name: 'Ambulances', available: amb.total - amb.current, deployed: amb.current },
-          { name: 'Medical Teams', available: med.total - med.current, deployed: med.current },
-          { name: 'Security Units', available: sec.total - sec.current, deployed: sec.current },
-          { name: 'Fire Units', available: fire.total - fire.current, deployed: fire.current },
-          { name: 'Volunteer Teams', available: vol.total - vol.current, deployed: vol.current }
+          { name: 'Ambulances', available: amb.available, deployed: amb.current },
+          { name: 'Medical Teams', available: med.available, deployed: med.current },
+          { name: 'Security Units', available: sec.available, deployed: sec.current },
+          { name: 'Fire Units', available: fire.available, deployed: fire.current },
+          { name: 'Volunteer Teams', available: vol.available, deployed: vol.current }
         ]);
       }
 

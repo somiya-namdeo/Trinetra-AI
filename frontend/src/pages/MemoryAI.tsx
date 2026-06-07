@@ -170,8 +170,8 @@ const MemoryAI = () => {
         const targetResource = findResourceByType(textLower);
         if (targetResource) {
           await dispatchResource({
-            id: targetResource.id,
-            task: actionText,
+            resource_id: targetResource.id,
+            incident_title: actionText,
             location: latestInc?.location || latestInc?.zone || 'Active Incident Zone',
             incident_id: latestInc?.id
           });
