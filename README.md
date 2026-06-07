@@ -135,21 +135,139 @@ graph TD
     G --> H[Response Teams]:::user
 ```
 
+## Architecture Diagrams
+
+### Main System Architecture
+
+```mermaid
+flowchart TD
+
+    A["Operator / Citizen"]
+    B["Incident Input"]
+    C["FastAPI Backend"]
+    D["AI Analysis Engine"]
+    E["Classification, Severity & Risk Scoring"]
+    F["Memory AI"]
+    G["Resource Allocation"]
+    H["Zone Intelligence"]
+    I["Telemetry Engine"]
+    J[("Supabase Database")]
+    K["Command Center Dashboard"]
+    L["Emergency Response Teams"]
+
+    A --> B
+    B --> C
+
+    C --> D
+    D --> E
+
+    C --> F
+    C --> G
+    C --> H
+    C --> I
+
+    E --> J
+    F --> J
+    G --> J
+    H --> J
+    I --> J
+
+    J --> K
+    K --> L
+```
+
 ### Deployment Architecture
 
 ```mermaid
-graph LR
-    classDef web fill:#2C3E50,stroke:#34495E,stroke-width:2px,color:#fff;
-    classDef host fill:#000000,stroke:#000000,stroke-width:2px,color:#fff;
-    classDef backend fill:#009688,stroke:#009688,stroke-width:2px,color:#fff;
-    classDef db fill:#3ECF8E,stroke:#3ECF8E,stroke-width:2px,color:#fff;
-    classDef ai fill:#4285F4,stroke:#4285F4,stroke-width:2px,color:#fff;
+flowchart LR
 
-    A[User Browser]:::web --> B[Vercel Frontend]:::host
-    B --> C[Render FastAPI Backend]:::backend
-    C -->|Persistence| D[(Supabase Database)]:::db
-    C -->|Inference| E[Gemini AI Service]:::ai
-    C -.->|Swagger UI| F[/docs API Docs]:::web
+    A["User Browser"]
+    B["Vercel Frontend"]
+    C["Render FastAPI Backend"]
+    D[("Supabase Database")]
+    E["Gemini AI Service"]
+    F["Swagger API Docs"]
+
+    A --> B
+    B --> C
+    C --> D
+    C --> E
+    C --> F
+```
+
+### Operational Workflow
+
+```mermaid
+flowchart LR
+
+    A["Incident Report"]
+    B["AI Classification"]
+    C["Risk Assessment"]
+    D{"Critical?"}
+    E["Immediate Response"]
+    F["Standard Monitoring"]
+    G["Resource Assignment"]
+    H["Zone Tracking"]
+    I["Status Update"]
+    J["Resolution"]
+    K["Memory Learning"]
+
+    A --> B
+    B --> C
+    C --> D
+
+    D -->|Yes| E
+    D -->|No| F
+
+    E --> G
+    F --> H
+
+    G --> H
+    H --> I
+    I --> J
+    J --> K
+```
+
+---
+
+## Database Architecture
+
+```mermaid
+erDiagram
+
+    ZONES ||--o{ INCIDENTS : contains
+    INCIDENTS ||--o{ RESOURCES : requires
+    INCIDENTS ||--o{ PATTERNS : generates
+    PATTERNS ||--o{ MEMORY_INSIGHTS : correlates
+
+    ZONES {
+        string name
+        string risk_level
+        int risk_score
+    }
+
+    INCIDENTS {
+        string title
+        string status
+        string severity
+        int priority_score
+    }
+
+    RESOURCES {
+        string name
+        string type
+        string status
+    }
+
+    PATTERNS {
+        string pattern_type
+        string signals
+    }
+
+    MEMORY_INSIGHTS {
+        string pattern_detected
+        int confidence
+    }
 ```
 
 ### Operational Workflow
