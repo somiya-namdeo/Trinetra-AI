@@ -1,4 +1,8 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+let API_BASE_URL = import.meta.env.VITE_API_URL || "";
+
+if (API_BASE_URL && API_BASE_URL.endsWith('/')) {
+  API_BASE_URL = API_BASE_URL.slice(0, -1);
+}
 
 if (!API_BASE_URL) {
   console.error("VITE_API_URL is missing");
