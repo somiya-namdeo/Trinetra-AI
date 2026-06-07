@@ -25,7 +25,8 @@ const Dashboard = () => {
     insightZone: 'Zone A',
     insightSeverity: 'elevated',
     totalIncidents: '24',
-    resolvedIncidents: '5'
+    resolvedIncidents: '5',
+    enRouteResources: '2'
   });
 
   useEffect(() => {
@@ -52,6 +53,7 @@ const Dashboard = () => {
         const totalIncCount = incidents && Array.isArray(incidents) ? incidents.length.toString() : prev.totalIncidents;
         const resolvedIncCount = incidents && Array.isArray(incidents) ? incidents.filter((i: any) => (i.status || '').toUpperCase() === 'RESOLVED').length.toString() : prev.resolvedIncidents;
         const availCount = resources && Array.isArray(resources) && resources.length > 0 ? resources.filter((r: any) => (r.status || '').toUpperCase() === 'AVAILABLE').length.toString() : prev.availableResources;
+        const enRouteCount = resources && Array.isArray(resources) && resources.length > 0 ? resources.filter((r: any) => ['DEPLOYED', 'EN_ROUTE', 'BUSY'].includes((r.status || '').toUpperCase())).length.toString() : (prev.enRouteResources || '2');
         const critZoneCount = zones && Array.isArray(zones) && zones.length > 0 ? zones.filter((z: any) => z.risk_level === 'Critical' || z.risk_score >= 80).length.toString() : prev.criticalZones;
         
         let highestRisk = prev.riskScore;
@@ -87,7 +89,8 @@ const Dashboard = () => {
           insightSeverity: bestZoneSeverity,
           riskSource: riskSource,
           totalIncidents: totalIncCount,
-          resolvedIncidents: resolvedIncCount
+          resolvedIncidents: resolvedIncCount,
+          enRouteResources: enRouteCount
         };
       });
     };
@@ -107,7 +110,7 @@ const Dashboard = () => {
       {/* Mission Ops Row */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         <div className="lg:col-span-9">
-          <MissionMap />
+          <MissionMap activeIncidents={statsData.activeIncidents} enRouteResources={statsData.enRouteResources} />
         </div>
         <div className="lg:col-span-3">
           <SystemStatus />
