@@ -68,7 +68,7 @@ const MemoryAI = () => {
     return available[0]; // fallback
   };
 
-  const activeIncidents = incidents ? incidents.filter(i => i.status !== 'RESOLVED' && i.status !== 'Resolved') : [];
+  const activeIncidents = incidents ? incidents.filter(i => ['ACTIVE', 'RESOURCES_ASSIGNED', 'IN_PROGRESS', 'CONTAINED'].includes((i.status || '').toUpperCase())) : [];
   const latestInc = activeIncidents.length > 0 ? [...activeIncidents].sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0] : null;
   const incCategory = (latestInc?.category || '').toLowerCase();
   

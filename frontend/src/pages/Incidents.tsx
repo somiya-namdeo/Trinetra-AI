@@ -62,14 +62,44 @@ const Incidents = () => {
 
     setAnalysisData(newAnalysis);
 
+    const reportLower = report.toLowerCase();
+    let preciseLocation = newAnalysis.location || "Unknown Sector";
+    if (reportLower.includes("zone c")) preciseLocation = "Zone C";
+    else if (reportLower.includes("north gate")) preciseLocation = "North Gate";
+    else if (reportLower.includes("water station")) preciseLocation = "Water Station";
+    else if (reportLower.includes("gate 7")) preciseLocation = "Gate 7";
+    else if (reportLower.includes("food court")) preciseLocation = "Food Court";
+    else if (reportLower.includes("zone a")) preciseLocation = "Zone A";
+    else if (reportLower.includes("zone b")) preciseLocation = "Zone B";
+    
+    let baseScore = 50;
+    const severityStr = (newAnalysis.severity || "MEDIUM").toUpperCase();
+    if (severityStr === "CRITICAL") baseScore = 90;
+    else if (severityStr === "HIGH") baseScore = 75;
+    else if (severityStr === "MEDIUM") baseScore = 50;
+    else if (severityStr === "LOW") baseScore = 30;
+
+    const catStr = (newAnalysis.category || "").toLowerCase();
+    if (catStr.includes("fire")) baseScore += 10;
+    else if (catStr.includes("medical")) baseScore += 5;
+    else if (catStr.includes("lost")) baseScore += 0;
+    else if (catStr.includes("water")) baseScore -= 5;
+    else if (catStr.includes("surge") || catStr.includes("crowd")) baseScore += 5;
+    else if (catStr.includes("security")) baseScore += 10;
+
+    const finalPriorityScore = Math.min(100, baseScore);
+
     const newIncident: any = {
-      title: report.split('.')[0] || "New Incident",
+      incident_id: `INC-${Date.now()}`,
+      title: newAnalysis.title || report.split('.')[0] || "New Incident",
+      description: report,
       severity: newAnalysis.severity || "HIGH",
       status: "ACTIVE",
-      location: newAnalysis.location || "Unknown",
+      location: preciseLocation,
+      zone: preciseLocation,
       category: newAnalysis.category || "General",
       created_at: new Date().toISOString(),
-      priority_score: newAnalysis.priority_score || 50,
+      priority_score: finalPriorityScore,
       recommended_resources: newAnalysis.recommended_resources || [],
       recommended_action: newAnalysis.recommended_action || "",
       estimated_response_time: newAnalysis.estimated_response_time || ""
@@ -86,12 +116,6 @@ const Incidents = () => {
     
     if (freshData) {
       let updatedIncident = assignedId ? freshData.find((i: any) => String(i.id) === String(assignedId)) : null;
-      
-      if (!updatedIncident && response?.incident) {
-        freshData.unshift(response.incident);
-        setLiveIncidents([...freshData]);
-        updatedIncident = response.incident;
-      }
       
       console.log("Selected after create", updatedIncident);
       if (updatedIncident) {
@@ -112,7 +136,7 @@ const Incidents = () => {
 
   const findResourceByType = (resources: any[], typeString: string) => {
     const typeLower = typeString.toLowerCase();
-    const available = resources.filter(r => r.status === 'Available');
+    const available = resources.filter(r => (r.status || '').toUpperCase() === 'AVAILABLE');
     if (typeLower.includes('fire')) return available.find(r => r.type?.toLowerCase().includes('fire') || r.name?.toLowerCase().includes('fire'));
     if (typeLower.includes('ambulance') || typeLower.includes('medical')) return available.find(r => r.type?.toLowerCase().includes('ambulance') || r.type?.toLowerCase().includes('medical'));
     if (typeLower.includes('security')) return available.find(r => r.type?.toLowerCase().includes('security') || r.name?.toLowerCase().includes('security'));

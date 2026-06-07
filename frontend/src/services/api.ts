@@ -41,6 +41,23 @@ export const generateAlert = async (payload: { incident_type: string; location: 
   }
 };
 
+export const saveAlert = async (payload: any) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/alerts/save`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error('Network response was not ok');
+    return await response.json();
+  } catch (error) {
+    console.error('Error saving alert:', error);
+    return null;
+  }
+};
+
 export const getResources = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/resources`);

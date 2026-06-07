@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Copy, Radio, Volume2, MessageSquare, Smartphone, Monitor, CheckCircle2, Sparkles, CheckSquare, Loader2 } from 'lucide-react';
-import { generateAlert, getAlerts } from '../services/api';
+import { generateAlert, getAlerts, saveAlert } from '../services/api';
 
 const Alerts = () => {
   const [copied, setCopied] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [alertData, setAlertData] = useState<{ english: string, hindi: string } | null>(null);
   const [alertsList, setAlertsList] = useState<any[]>([]);
+  const [currentAlertId, setCurrentAlertId] = useState<string | null>(null);
+  const [currentAlertTitle, setCurrentAlertTitle] = useState<string>("Operational Alert");
   
   const [activeIncident, setActiveIncident] = useState<any>(null);
   const [isEditingEn, setIsEditingEn] = useState(false);
@@ -19,32 +21,48 @@ const Alerts = () => {
     pa: true, sms: true, app: true, sign: true
   });
 
+  const fetchRecentAlerts = async () => {
+    const data = await getAlerts();
+    if (data && Array.isArray(data) && data.length > 0) {
+      const mapped = data.sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()).map((alert: any) => {
+        let chans = alert.channels;
+        if (Array.isArray(chans)) chans = chans.join(' · ');
+        else if (!chans) chans = 'None';
+        
+        let alertStatus = alert.status || 'DRAFT';
+        let reachDisplay = alert.reach;
+        if (!reachDisplay && alertStatus === 'BROADCASTED') reachDisplay = 'Local';
+        else if (!reachDisplay) reachDisplay = '-';
+        
+        return {
+          id: alert.id,
+          time: new Date(alert.created_at || new Date()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+          alert: alert.title || 'Alert',
+          channels: chans,
+          reach: reachDisplay,
+          status: alertStatus
+        };
+      });
+      console.log("Fetched recent alerts:", mapped);
+      setAlertsList(mapped);
+    } else {
+      setAlertsList([
+        { time: '14:21', alert: 'Hydration reminder — Zone A', channels: 'PA · SMS · App', reach: '1.26M', status: 'BROADCASTED' }
+      ]);
+    }
+    
+    const { getIncidents } = await import('../services/api');
+    const incs = await getIncidents();
+    if (incs && Array.isArray(incs)) {
+      const active = incs.filter(i => ['ACTIVE', 'RESOURCES_ASSIGNED', 'IN_PROGRESS', 'CONTAINED'].includes((i.status || '').toUpperCase()));
+      if (active.length > 0) {
+        const latest = active.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+        setActiveIncident(latest);
+      }
+    }
+  };
+
   useEffect(() => {
-    const fetchRecentAlerts = async () => {
-      const data = await getAlerts();
-      if (data && Array.isArray(data) && data.length > 0) {
-        setAlertsList(data);
-      } else {
-        setAlertsList([
-          { time: '14:21', alert: 'Hydration reminder — Zone A', channels: 'PA · SMS · App', reach: '1.26M', status: 'DELIVERED' },
-          { time: '13:48', alert: 'Gate 7 reroute notice', channels: 'PA · Signage', reach: '32K', status: 'DELIVERED' },
-          { time: '13:12', alert: 'Lost child reunified', channels: 'App', reach: '1.2M', status: 'DELIVERED' },
-          { time: '12:38', alert: 'Heatwave advisory', channels: 'All channels', reach: '1.26M', status: 'DELIVERED' },
-          { time: '11:45', alert: 'Stage 2 schedule shift', channels: 'App · SMS', reach: '1.24M', status: 'DELIVERED' },
-          { time: '10:15', alert: 'Welcome announcement', channels: 'PA', reach: 'All zones', status: 'DELIVERED' }
-        ]);
-      }
-      
-      const { getIncidents } = await import('../services/api');
-      const incs = await getIncidents();
-      if (incs && Array.isArray(incs)) {
-        const active = incs.filter(i => i.status !== 'RESOLVED' && i.status !== 'Resolved');
-        if (active.length > 0) {
-          const latest = active.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
-          setActiveIncident(latest);
-        }
-      }
-    };
     fetchRecentAlerts();
   }, []);
 
@@ -76,7 +94,7 @@ const Alerts = () => {
     const incs = await getIncidents();
     let latestIncident = activeIncident;
     if (incs && Array.isArray(incs)) {
-      const active = incs.filter(i => i.status !== 'RESOLVED' && i.status !== 'Resolved');
+      const active = incs.filter(i => ['ACTIVE', 'RESOURCES_ASSIGNED', 'IN_PROGRESS', 'CONTAINED'].includes((i.status || '').toUpperCase()));
       if (active.length > 0) {
         latestIncident = active.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
         setActiveIncident(latestIncident); // Update state to reflect in UI
@@ -118,29 +136,148 @@ const Alerts = () => {
     }
 
     setAlertData({ english, hindi });
-    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    setAlertsList([{ time, alert: title, channels: 'Pending', reach: '-', status: 'DRAFT' }, ...alertsList]);
+    setCurrentAlertTitle(title);
+    
+    // Save to Supabase
+    console.log("Creating alert in Supabase");
+    const channelsArr = Object.keys(selectedChannels).filter(k => selectedChannels[k]).map(k => k.toUpperCase());
+    const saved = await saveAlert({
+      title: title,
+      english_message: english,
+      hindi_message: hindi,
+      incident_id: latestIncident?.id ? String(latestIncident.id) : undefined,
+      channels: channelsArr,
+      status: "DRAFT"
+    });
+    
+    if (saved && saved.alert) {
+      console.log("Alert saved successfully", saved.alert);
+      setCurrentAlertId(saved.alert.id);
+      
+      const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      const newAlertItem = { 
+        id: saved.alert.id,
+        time, 
+        alert: title, 
+        channels: channelsArr.join(' · ') || 'Pending', 
+        reach: '-', 
+        status: 'DRAFT' 
+      };
+      
+      setAlertsList(prev => {
+        const filtered = prev.filter(a => a.id !== saved.alert.id);
+        return [newAlertItem, ...filtered];
+      });
+    }
+
     setIsGenerating(false);
   };
 
-  const handleSaveDraft = () => {
-    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    setAlertsList([{ time, alert: 'Saved Draft Alert', channels: 'Pending', reach: '-', status: 'DRAFT' }, ...alertsList]);
-    showToast("Draft saved");
+  const calculateReach = () => {
+    const active = Object.keys(selectedChannels).filter(k => selectedChannels[k]);
+    if (active.length === 0) return "-";
+    if (active.length === 4) return "1.26M";
+    
+    let total = 0;
+    if (selectedChannels.app) total += 1200000;
+    if (selectedChannels.sms) total += 42500;
+    if (selectedChannels.pa) total += 18000;
+    
+    if (total === 0 && selectedChannels.sign) return "64 displays";
+    
+    if (total >= 1000000) {
+      return (total / 1000000).toFixed(1) + "M";
+    } else if (total > 0) {
+      return (total / 1000).toFixed(1) + "K";
+    }
+    return "-";
   };
 
-  const handleBroadcastNow = () => {
-    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    const chans = Object.keys(selectedChannels).filter(k => selectedChannels[k]).map(k => k.toUpperCase()).join(' · ');
-    const reach = Object.keys(selectedChannels).filter(k => selectedChannels[k]).length * 32000;
-    setAlertsList([{ time, alert: 'Emergency Broadcast', channels: chans || 'None', reach: reach > 0 ? `${(reach/1000).toFixed(0)}K` : '-', status: 'BROADCASTED' }, ...alertsList]);
-    showToast("Broadcast sent successfully");
+  const handleSaveDraft = async () => {
+    console.log("Creating alert in Supabase (Save Draft)");
+    const channelsArr = Object.keys(selectedChannels).filter(k => selectedChannels[k]).map(k => k.toUpperCase());
+    
+    const payload = {
+      id: currentAlertId || undefined,
+      title: currentAlertTitle,
+      english_message: enText,
+      hindi_message: hiText,
+      channels: channelsArr,
+      status: "DRAFT",
+      reach: null,
+      incident_id: activeIncident?.id ? String(activeIncident.id) : undefined
+    };
+    
+    console.log("Save Draft payload:", payload);
+    const saved = await saveAlert(payload);
+
+    if (saved && saved.alert) {
+        console.log("Backend response:", saved);
+        setCurrentAlertId(saved.alert.id);
+        await fetchRecentAlerts();
+        showToast("Draft saved");
+    } else {
+        showToast("Error saving draft");
+    }
   };
 
-  const handleIndividualBroadcast = (lang: string) => {
-    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    setAlertsList([{ time, alert: `Broadcasted (${lang})`, channels: 'PA', reach: 'Local', status: 'BROADCASTED' }, ...alertsList]);
-    showToast(`Broadcasted ${lang} successfully`);
+  const handleBroadcastNow = async () => {
+    console.log("Updating alert broadcast status");
+    const channelsArr = Object.keys(selectedChannels).filter(k => selectedChannels[k]).map(k => k.toUpperCase());
+    const calculatedReach = calculateReach();
+    
+    const payload = {
+      id: currentAlertId || undefined,
+      title: currentAlertTitle,
+      english_message: enText,
+      hindi_message: hiText,
+      channels: channelsArr,
+      status: "BROADCASTED",
+      reach: calculatedReach,
+      broadcast_at: new Date().toISOString(),
+      incident_id: activeIncident?.id ? String(activeIncident.id) : undefined
+    };
+    
+    console.log("Broadcast payload:", payload);
+    const saved = await saveAlert(payload);
+
+    if (saved && saved.alert) {
+        console.log("Backend response:", saved);
+        setCurrentAlertId(saved.alert.id);
+        await fetchRecentAlerts();
+        showToast("Broadcast sent successfully");
+    } else {
+        showToast("Error sending broadcast");
+    }
+  };
+
+  const handleIndividualBroadcast = async (lang: string) => {
+    console.log("Updating alert broadcast status");
+    const channelsArr = ['PA'];
+    
+    const payload = {
+      id: currentAlertId || undefined,
+      title: currentAlertTitle,
+      english_message: enText,
+      hindi_message: hiText,
+      channels: channelsArr,
+      status: "BROADCASTED",
+      reach: "Local",
+      broadcast_at: new Date().toISOString(),
+      incident_id: activeIncident?.id ? String(activeIncident.id) : undefined
+    };
+    
+    console.log("Broadcast payload:", payload);
+    const saved = await saveAlert(payload);
+
+    if (saved && saved.alert) {
+        console.log("Backend response:", saved);
+        setCurrentAlertId(saved.alert.id);
+        await fetchRecentAlerts();
+        showToast(`Broadcasted ${lang} successfully`);
+    } else {
+        showToast("Error sending broadcast");
+    }
   };
 
   const englishAlert = enText || "URGENT — ZONE A NOTICE: Due to a temporary water-supply issue and rising temperatures, please move to shaded rest areas in Zone B or Zone C. Free hydration is available at stations B-12 and C-04. Medical staff are on site. Stay calm and follow steward instructions.";

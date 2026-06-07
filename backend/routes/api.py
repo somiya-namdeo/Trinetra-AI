@@ -1,5 +1,12 @@
 from fastapi import APIRouter
-from models.schemas import IncidentAnalyzeRequest, AlertGenerateRequest, ResourceDispatchRequest, IncidentStatusUpdateRequest, IncidentCreateRequest
+from models.schemas import (
+    IncidentAnalyzeRequest, 
+    AlertGenerateRequest, 
+    AlertSaveRequest,
+    ResourceDispatchRequest, 
+    IncidentStatusUpdateRequest, 
+    IncidentCreateRequest
+)
 from services import ai_service
 from services.memory_ai import generate_memory_ai_insight
 from services.data_loader import get_zones, get_incidents, get_resources, get_alerts, get_telemetry, get_patterns, save_json
@@ -27,18 +34,46 @@ def generate_alerts_api(request: AlertGenerateRequest):
     
     if result and not result.get("error"):
         try:
-            supabase_service.insert_alert({
+            inserted = supabase_service.insert_alert({
                 "title": f"Alert: {request.incident_type}",
-                "message": result.get("english", ""),
+                "english_message": result.get("english", ""),
                 "hindi_message": result.get("hindi", ""),
                 "status": "DRAFT",
                 "severity": request.severity,
                 "location": request.location
             })
+            if inserted and "id" in inserted:
+                result["id"] = inserted["id"]
         except Exception:
             pass
 
     return result
+
+@router.post("/alerts/save")
+def save_alert_api(request: AlertSaveRequest):
+    import datetime
+    data = {
+        "title": request.title,
+        "english_message": request.english_message,
+        "hindi_message": request.hindi_message,
+        "incident_id": request.incident_id,
+        "channels": request.channels,
+        "status": request.status,
+        "reach": request.reach
+    }
+    
+    if request.status == "BROADCASTED":
+        data["broadcast_at"] = datetime.datetime.utcnow().isoformat()
+        
+    data["updated_at"] = datetime.datetime.utcnow().isoformat()
+    
+    saved_alert = None
+    if request.id:
+        saved_alert = supabase_service.update_alert(request.id, data)
+    else:
+        saved_alert = supabase_service.insert_alert(data)
+        
+    return {"status": "success", "alert": saved_alert}
 
 # ---------------------------------------------------------
 # New Data-Driven GET Endpoints (Supabase with JSON fallback)
@@ -92,12 +127,17 @@ def create_incident_api(request: IncidentCreateRequest):
     created_inc = None
     try:
         created_inc = supabase_service.insert_incident({
+            "incident_id": request.incident_id,
             "title": request.title,
             "status": request.status,
             "severity": request.severity,
             "location": request.location,
-            "description": "Generated via Report",
-            "category": request.category
+            "zone": request.zone,
+            "description": request.description,
+            "category": request.category,
+            "priority_score": request.priority_score,
+            "recommended_resources": request.recommended_resources,
+            "recommended_action": request.recommended_action
         })
     except Exception:
         pass

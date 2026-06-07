@@ -7,7 +7,7 @@ const IncidentFeed = ({ incidents = [] }: { incidents?: any[] }) => {
   
   const activeIncidents = incidents.filter(i => {
     const s = (i.status || '').toUpperCase();
-    return s !== 'RESOLVED';
+    return ['ACTIVE', 'RESOURCES_ASSIGNED', 'IN_PROGRESS', 'CONTAINED'].includes(s);
   });
 
   const totalToday = incidents.length;

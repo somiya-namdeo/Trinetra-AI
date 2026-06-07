@@ -13,11 +13,14 @@ const ImpactAnalysis = () => {
       ]);
 
       if (incidents && resources && zones && incidents.length > 0 && resources.length > 0 && zones.length > 0) {
-        const deployedResources = resources.filter((r: any) => r.status !== 'Available').length;
+        const deployedResources = resources.filter((r: any) => {
+          const s = (r.status || '').toUpperCase();
+          return s === 'DEPLOYED' || s === 'BUSY';
+        }).length;
         const totalResources = resources.length;
         const utilization = Math.round((deployedResources / totalResources) * 100) || 0;
         
-        const criticalIncidents = incidents.filter((i: any) => i.severity === 'Critical' || i.severity === 'High').length;
+        const criticalIncidents = incidents.filter((i: any) => (i.severity || '').toUpperCase() === 'CRITICAL' || (i.severity || '').toUpperCase() === 'HIGH').length;
         
         const safeZones = zones.filter((z: any) => z.risk_level === 'Low' || z.risk_score < 40).length;
         const totalZones = zones.length;

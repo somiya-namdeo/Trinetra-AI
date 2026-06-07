@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional, Union, Any
 
 class IncidentAnalyzeRequest(BaseModel):
     report: str
@@ -9,7 +9,18 @@ class AlertGenerateRequest(BaseModel):
     location: str
     severity: str
 
-from typing import Optional, Union
+class AlertSaveRequest(BaseModel):
+    id: Optional[Any] = None
+    title: Optional[str] = None
+    english_message: Optional[str] = None
+    hindi_message: Optional[str] = None
+    status: Optional[str] = "DRAFT"
+    channels: Optional[List[str]] = []
+    incident_id: Optional[Any] = None
+    reach: Optional[str] = None
+    broadcast_at: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
 
 class ResourceDispatchRequest(BaseModel):
     id: str
@@ -23,10 +34,13 @@ class IncidentStatusUpdateRequest(BaseModel):
 
 class IncidentCreateRequest(BaseModel):
     id: Optional[Union[str, int]] = None
+    incident_id: Optional[str] = None
     title: str
     severity: str
     status: str
     location: str
+    zone: Optional[str] = None
+    description: Optional[str] = ""
     category: str
     created_at: str
     priority_score: Optional[int] = 50

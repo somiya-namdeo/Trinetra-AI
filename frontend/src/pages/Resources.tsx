@@ -50,7 +50,7 @@ const Resources = () => {
     
     let availScore = 0;
     const status = unit.status;
-    if (status === 'Available') availScore = 100;
+    if ((status || '').toUpperCase() === 'AVAILABLE') availScore = 100;
     else if (status === 'Busy') availScore = 60;
     else if (status === 'Deployed') availScore = 40;
     else availScore = 0;
@@ -218,7 +218,7 @@ const Resources = () => {
            const safeType = unit.type || fallbackUnit.type || "General Resource";
            const safeStatus = unit.status || fallbackUnit.status || "Available";
            const safeLocation = unit.location || unit.zone || fallbackUnit.location || "Standby Base";
-           const safeEta = unit.eta_minutes !== undefined && unit.eta_minutes !== null ? (unit.eta_minutes === 0 ? (safeStatus === 'Available' ? 'Available now' : 'On site') : `${unit.eta_minutes} min`) : (unit.eta || fallbackUnit.eta || "Available now");
+           const safeEta = unit.eta_minutes !== undefined && unit.eta_minutes !== null ? (unit.eta_minutes === 0 ? ((safeStatus || '').toUpperCase() === 'AVAILABLE' ? 'Available now' : 'On site') : `${unit.eta_minutes} min`) : (unit.eta || fallbackUnit.eta || "Available now");
            let safeTask = unit.assigned_incident_id || unit.task || fallbackUnit.assignment || "Unassigned";
            let safeFit = unit.bestFit || fallbackUnit.fit || 75;
            let safeCapacity = unit.capacity ?? "N/A";
@@ -244,8 +244,8 @@ const Resources = () => {
            }
 
            let recommendFor = fallbackUnit.recommendFor || 'Standby';
-           if (safeStatus === 'Available' && incidents && incidents.length > 0) {
-             const activeIncs = incidents.filter((i: any) => i.status !== 'Resolved');
+           if ((safeStatus || '').toUpperCase() === 'AVAILABLE' && incidents && incidents.length > 0) {
+             const activeIncs = incidents.filter((i: any) => ['ACTIVE', 'RESOURCES_ASSIGNED', 'IN_PROGRESS', 'CONTAINED'].includes((i.status || '').toUpperCase()));
              if (activeIncs.length > 0) {
                const targetInc = activeIncs[idx % activeIncs.length];
                let score = 70;
@@ -258,7 +258,7 @@ const Resources = () => {
                safeFit = Math.min(score, 99);
                recommendFor = `${targetInc.category} — ${targetInc.location || targetInc.zone}`;
              }
-           } else if (safeStatus !== 'Available') {
+           } else if ((safeStatus || '').toUpperCase() !== 'AVAILABLE') {
              recommendFor = 'Standby';
            }
 
@@ -273,7 +273,7 @@ const Resources = () => {
                eta: safeEta,
                assignment: safeTask,
                fit: safeFit,
-               isRecommended: safeStatus === 'Available' && safeFit > 80,
+               isRecommended: (safeStatus || '').toUpperCase() === 'AVAILABLE' && safeFit > 80,
                recommendFor: recommendFor
            };
         });
@@ -330,7 +330,7 @@ const Resources = () => {
     } else {
       const unit = fieldUnits.find(u => u.id === id);
       if (unit) {
-        const isDeploy = unit.status === 'Available';
+        const isDeploy = (unit.status || '').toUpperCase() === 'AVAILABLE';
         setShowToast({ show: true, message: isDeploy ? 'Resource deployed successfully.' : `Resource reassigned to ${forceZone || 'new zone'}.` });
         
         setFieldUnits(prev => prev.map(u => {
@@ -566,14 +566,14 @@ const Resources = () => {
                   }
                   
                   const status = isUnitAssigned ? 'Assigned' : unit.status;
-                  const isAvail = status === 'Available';
+                  const isAvail = (status || '').toUpperCase() === 'AVAILABLE';
                   
                   let statusBadge = '';
                   if (isUnitAssigned) {
                     statusBadge = 'bg-safe/20 text-safe border-safe/30';
                   } else if (isHighlighted) {
                     statusBadge = isAvail ? 'bg-primary text-white border-primary shadow-[0_0_10px_rgba(14,165,233,0.5)]' : 'bg-warning/20 text-warning border-warning/50';
-                  } else if (status === 'Available') {
+                  } else if ((status || '').toUpperCase() === 'AVAILABLE') {
                     statusBadge = 'bg-safe/20 text-safe border-safe/30';
                   } else if (status === 'Deployed') {
                     statusBadge = 'bg-primary/20 text-primary border-primary/30';
@@ -655,7 +655,7 @@ const Resources = () => {
                   ) : (
                     <div className="flex gap-2">
                       <button 
-                        onClick={() => status === 'Available' ? handleAssign(unit.id, false) : setReassigningId(unit.id)}
+                        onClick={() => (status || '').toUpperCase() === 'AVAILABLE' ? handleAssign(unit.id, false) : setReassigningId(unit.id)}
                         disabled={isUnitAssigned || status === 'Maintenance'}
                         className={`flex-1 py-1.5 rounded text-xs font-bold transition-colors border ${
                           isUnitAssigned || status === 'Maintenance'

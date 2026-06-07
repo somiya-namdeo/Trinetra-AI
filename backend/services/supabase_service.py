@@ -72,6 +72,17 @@ def insert_alert(data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         logger.warning(f"Supabase insert_alert failed: {e}")
         return None
 
+def update_alert(alert_id: str, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    supabase = get_supabase()
+    if not supabase:
+        return None
+    try:
+        response = supabase.table("alerts").update(data).eq("id", alert_id).execute()
+        return response.data[0] if response.data else None
+    except Exception as e:
+        logger.warning(f"Supabase update_alert failed: {e}")
+        return None
+
 def update_resource(resource_id: str, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     supabase = get_supabase()
     if not supabase:

@@ -413,7 +413,7 @@
         "id": "SEC-010",
         "name": "Security Unit 10",
         "type": "Security Unit",
-        "status": "Maintenance",
+        "status": "AVAILABLE",
         "location": "Zone C",
         "zone": "Zone C",
         "eta_minutes": 0,
@@ -421,7 +421,10 @@
         "assigned_incident_id": null,
         "latitude": 25.4368,
         "longitude": 81.8435,
-        "last_updated": "2026-06-06T15:05:00+05:30"
+        "last_updated": "2026-06-06T15:05:00+05:30",
+        "task": "Unassigned",
+        "assignment": "Unassigned",
+        "assigned_incident_title": null
     },
     {
         "id": "SEC-011",

@@ -78,8 +78,10 @@ const Analytics = () => {
         getResources()
       ]);
 
-      const activeIncidents = (incidents || []).filter((i: any) => i.status !== 'Resolved' && i.status !== 'RESOLVED');
-      const resolvedIncidents = (incidents || []).filter((i: any) => i.status === 'Resolved' || i.status === 'RESOLVED');
+      const activeIncidents = (incidents || []).filter((i: any) => 
+        ['ACTIVE', 'RESOURCES_ASSIGNED', 'IN_PROGRESS', 'CONTAINED'].includes((i.status || '').toUpperCase())
+      );
+      const resolvedIncidents = (incidents || []).filter((i: any) => (i.status || '').toUpperCase() === 'RESOLVED');
 
       // KPIs
       let todayResolved = 0;

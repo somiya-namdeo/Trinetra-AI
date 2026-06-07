@@ -45,13 +45,13 @@ const Dashboard = () => {
         const activeCount = incidents && Array.isArray(incidents) && incidents.length > 0 
           ? incidents.filter((i: any) => {
               const s = (i.status || '').toUpperCase();
-              return s !== 'RESOLVED';
+              return ['ACTIVE', 'RESOURCES_ASSIGNED', 'IN_PROGRESS', 'CONTAINED'].includes(s);
             }).length.toString() 
           : prev.activeIncidents;
           
         const totalIncCount = incidents && Array.isArray(incidents) ? incidents.length.toString() : prev.totalIncidents;
         const resolvedIncCount = incidents && Array.isArray(incidents) ? incidents.filter((i: any) => (i.status || '').toUpperCase() === 'RESOLVED').length.toString() : prev.resolvedIncidents;
-        const availCount = resources && Array.isArray(resources) && resources.length > 0 ? resources.filter((r: any) => r.status === 'Available').length.toString() : prev.availableResources;
+        const availCount = resources && Array.isArray(resources) && resources.length > 0 ? resources.filter((r: any) => (r.status || '').toUpperCase() === 'AVAILABLE').length.toString() : prev.availableResources;
         const critZoneCount = zones && Array.isArray(zones) && zones.length > 0 ? zones.filter((z: any) => z.risk_level === 'Critical' || z.risk_score >= 80).length.toString() : prev.criticalZones;
         
         let highestRisk = prev.riskScore;
