@@ -86,49 +86,49 @@ const MemoryAI = () => {
     dynamicPattern = {
       title: 'Fire Hazard Escalation',
       trace: ['Detected thermal anomaly', 'Correlated with crowd density in adjacent zones', 'Identified rapid temperature increase'],
-      signals: ['Thermal sensor #42 (High)', 'Smoke detector #12 (Active)', 'Crowd density (High)'],
+      signals: ['Thermal sensor #42 (High)', 'Smoke detector #12 (Active)', 'Evacuation Radius: Active'],
       outcome: 'High probability of structural fire spread within 12 minutes.',
-      nodes: ['Incident Class.', 'Risk Prediction', 'Resource Opt.', 'Broadcast Agent'],
+      nodes: ['Fire Signal', 'Evacuation AI', 'Fire Response', 'Risk Prediction', 'Broadcast Agent'],
       recommendations: ['Dispatch Fire Units to affected zone', 'Dispatch Ambulances for standby', 'Establish Safety Perimeter', 'Broadcast Evacuation to adjacent zones'],
-      timeline: ['Thermal Spike Detected', 'Smoke Signature Confirmed', 'Fire Hazard Pattern Matched', 'Evacuation Alert Generated', 'Fire/Medical Dispatch Recommended', 'Perimeter Secured']
+      timeline: ['Fire Alert Received', 'Hazard Confirmed', 'Fire Unit Dispatched', 'Containment Started', 'Hazard Neutralized', 'Zone Secured']
     };
   } else if (incCategory.includes('crowd') || incCategory.includes('surge')) {
     dynamicPattern = {
       title: 'Crowd Surge Correlation',
       trace: ['Detected rapid density increase', 'Matched bottleneck signature at main gate', 'Correlated with incoming transit volume'],
-      signals: ['Camera feed: Gate 3 (Congestion)', 'Turnstile throughput (Critical)', 'Transit arrival spike'],
+      signals: ['Camera feed: Gate 3 (Congestion)', 'Turnstile throughput (Critical)', 'Density Level: High'],
       outcome: 'Risk of crushing incident or trampling at choke points.',
-      nodes: ['Crowd Intel', 'Risk Prediction', 'Broadcast Agent'],
+      nodes: ['Crowd Intel', 'Density Monitor', 'Gate Flow AI', 'Security Dispatch', 'Diversion Control'],
       recommendations: ['Deploy Security Teams to bottleneck', 'Deploy Volunteers to guide flow', 'Open Alternative Gates', 'Crowd Guidance Broadcast via PA'],
-      timeline: ['Transit Volume Spike', 'Bottleneck Detected', 'Crowd Surge Pattern Matched', 'Diversion Alert Generated', 'Security Deployment Recommended', 'Flow Regulated']
+      timeline: ['Crowd Build-up Detected', 'Density Threshold Crossed', 'Security Deployed', 'Flow Diversion Initiated', 'Congestion Reduced', 'Situation Normal']
     };
   } else if (incCategory.includes('medical') || incCategory.includes('health')) {
     dynamicPattern = {
       title: 'Medical Escalation Pattern',
       trace: ['Multiple simultaneous distress signals', 'Matched with high-heat zone history', 'Correlated with prolonged wait times'],
-      signals: ['Biometric anomalies reported', 'Temperature > 38°C in zone', 'Stationary crowd clusters'],
-      outcome: 'Anticipated wave of heat exhaustion cases exceeding local unit capacity.',
-      nodes: ['Incident Class.', 'Medical Intel', 'Risk Prediction', 'Resource Opt.'],
-      recommendations: ['Dispatch Ambulances to high-heat zones', 'Deploy Medical Teams on foot', 'Reserve Hospital Capacity', 'Distribute mobile hydration units'],
-      timeline: ['Medical Incident Reported', 'Heat Correlation Identified', 'Escalation Pattern Matched', 'Medical Surge Alert', 'Ambulance Dispatch Recommended', 'Patient Triage']
+      signals: ['Unconscious/not responding report', 'High-density gate area', 'Patient Risk: Critical'],
+      outcome: 'Potential patient deterioration if response delayed.',
+      nodes: ['Incident Class', 'Medical Intel', 'Ambulance Routing', 'Risk Prediction', 'Resource Optimizer'],
+      recommendations: [`Dispatch ambulance to ${latestInc?.location || latestInc?.zone || 'target zone'}`, 'Deploy medical response team', 'Clear emergency access route', 'Assign security unit for crowd control'],
+      timeline: ['Incident Reported', 'Medical Classification', 'Resource Recommendation', 'Ambulance Assigned', 'Response In Progress', 'Patient Stabilized']
     };
   } else if (incCategory.includes('lost') || incCategory.includes('child')) {
     dynamicPattern = {
       title: 'Child Separation Cluster',
       trace: ['Missing person report filed', 'Correlated with crowd movement vectors', 'Matched typical separation locations'],
-      signals: ['Report: Missing 6yo', 'Crowd flow: Outbound', 'Security camera blindspots'],
+      signals: ['Report: Missing 6yo', 'Crowd flow: Outbound', 'Exit Gate Risk: High'],
       outcome: 'Likely location trajectory points toward North Exit within 5 mins.',
-      nodes: ['Incident Class.', 'Crowd Intel', 'Resource Opt.', 'Broadcast Agent'],
+      nodes: ['Missing Person Signal', 'Crowd Flow Analysis', 'Search Zone AI', 'Volunteer Dispatch', 'Reunification Center'],
       recommendations: ['Deploy Security to exit routes', 'Deploy Volunteer Search Teams', 'Activate Reunification Center', 'Targeted PA Announcement'],
-      timeline: ['Missing Child Reported', 'Movement Vector Analyzed', 'Separation Pattern Matched', 'Security Alert Generated', 'Search Team Deployment', 'Zone Lockdown']
+      timeline: ['Child Reported Missing', 'Search Zone Defined', 'Volunteer Teams Assigned', 'Drone Search Activated', 'Child Located', 'Family Reunited']
     };
   } else if (incCategory.includes('water') || incCategory.includes('infrastructure')) {
     dynamicPattern = {
       title: 'Infrastructure Degradation Pattern',
       trace: ['Water pressure drop detected', 'Correlated with high ambient temperature', 'Matched historical pump failure'],
-      signals: ['Pressure sensor (Low)', 'Temperature (High)', 'Hydration demand (Peak)'],
+      signals: ['Pressure sensor (Low)', 'Temperature (High)', 'Tanker Demand: Rising'],
       outcome: 'Imminent failure of Zone B water distribution leading to severe heat risks.',
-      nodes: ['Incident Class.', 'Risk Prediction', 'Resource Opt.', 'Broadcast Agent'],
+      nodes: ['Infrastructure Signal', 'Demand Monitor', 'Water Supply AI', 'Resource Optimizer', 'Broadcast Agent'],
       recommendations: ['Dispatch Utility Teams for repair', 'Deploy Command Vehicle for coordination', 'Public Announcement regarding outage', 'Reroute attendees to Zone A'],
       timeline: ['Pressure Drop Detected', 'Demand Spike Correlated', 'Degradation Pattern Matched', 'Maintenance Alert Generated', 'Utility Dispatch Recommended', 'Alternative Supplied']
     };
@@ -218,41 +218,62 @@ const MemoryAI = () => {
       ];
     }
     
-    return [...activeIncidents].sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5).map(inc => {
+    const uniqueMap = new Map();
+    [...activeIncidents].sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).forEach(inc => {
       const isCritical = inc.severity === 'Critical';
       const isHigh = inc.severity === 'High';
       const cat = (inc.category || '').toLowerCase();
       
       let reason = "Correlating with historical operational patterns";
       let title = inc.title || inc.category || "Incident Detected";
+      const loc = inc.location || inc.zone || 'Unknown Zone';
       
       if (cat.includes('fire')) {
         title = "Fire Hazard Escalation";
-        reason = "Correlated with temperature and crowd density";
+        const options = ["Hazard escalation pattern detected", "Nearby crowd exposure risk", "Immediate response required"];
+        reason = options[Number(inc.id || 0) % 3];
       } else if (cat.includes('lost') || cat.includes('child')) {
-        title = "Lost Child Pattern Correlation";
-        reason = "Matched with crowd movement and previous missing-person reports";
+        title = "Lost Child Cluster";
+        const options = ["Missing person pattern detected", "Crowd density affecting search complexity", "Exit monitoring recommended"];
+        reason = options[Number(inc.id || 0) % 3];
       } else if (cat.includes('water') || cat.includes('infrastructure')) {
         title = "Repeated Water Station Failure";
-        reason = "Correlating with heat metrics and hydration demand";
+        const options = ["Supply disruption cluster detected", "Crowd service impact identified", "Correlating with heat metrics"];
+        reason = options[Number(inc.id || 0) % 3];
       } else if (cat.includes('medical') || cat.includes('health')) {
-        title = "Medical Emergency Pattern";
-        reason = "Aligning with high temperature zones";
+        title = "Medical Escalation Pattern";
+        const options = ["Unconscious patient pattern detected", "Correlating with historical medical emergencies", "Elevated response urgency identified"];
+        reason = options[Number(inc.id || 0) % 3];
       } else if (cat.includes('crowd') || cat.includes('surge') || title.toLowerCase().includes('shouting')) {
-        title = "Crowd Surge Risk";
-        reason = "Matched with entrance bottleneck history";
+        title = "Crowd Surge Pattern";
+        const options = ["Density threshold exceeded", "Movement bottleneck detected", "Escalation risk increasing"];
+        reason = options[Number(inc.id || 0) % 3];
       } else if (cat.includes('security') || cat.includes('threat') || title.toLowerCase().includes('fight')) {
         title = "Security Threat Profile";
         reason = "Matched with prior altercation signatures";
+      } else {
+        const options = ["Incident report received", "Operational anomaly detected", "Field verification recommended", "Situation monitoring active"];
+        reason = options[Number(inc.id || 0) % 4];
       }
 
+      const key = `${title}-${loc}`;
+      if (!uniqueMap.has(key)) {
+         uniqueMap.set(key, { ...inc, processedTitle: title, processedReason: reason, processedLoc: loc });
+      }
+    });
+
+    const deduped = Array.from(uniqueMap.values()).slice(0, 4);
+
+    return deduped.map(inc => {
+      const isCritical = inc.severity === 'Critical';
+      const isHigh = inc.severity === 'High';
       return {
-        title,
-        loc: inc.location || inc.zone || 'Unknown Zone',
+        title: inc.processedTitle,
+        loc: inc.processedLoc,
         conf: insightData?.confidence ? `${insightData.confidence}%` : (isCritical ? '94%' : '88%'),
         sev: inc.severity?.toUpperCase() || 'MEDIUM',
         badge: isCritical ? 'bg-[#ff003c]/20 text-[#ff003c] border-[#ff003c]/30' : isHigh ? 'bg-critical/20 text-critical border-critical/30' : 'bg-warning/20 text-warning border-warning/30',
-        action: reason
+        action: inc.processedReason
       };
     });
   };
@@ -270,16 +291,37 @@ const MemoryAI = () => {
     const crowdCount = activeIncidents.filter(i => (i.category || '').toLowerCase().includes('crowd')).length || 0;
     const waterCount = activeIncidents.filter(i => (i.category || '').toLowerCase().includes('water') || (i.category || '').toLowerCase().includes('infrastructure')).length || 0;
 
-    // Advanced dynamic formulas
-    heatProb = Math.min(99, Math.floor((avgTemp - 30) * 5 + medCount * 12));
-    crowdProb = Math.min(99, Math.floor(avgDensity + crowdCount * 18));
+    const variance = latestInc && latestInc.id ? (Number(latestInc.id) % 15) : 5;
     
-    // Resource availability impact (if fewer ambulances available, risk goes up)
-    const availableAmbulances = resources.filter(r => (r.type?.toLowerCase().includes('ambulance') || r.type?.toLowerCase().includes('medical')) && r.status === 'Available').length;
-    const medResourcePenalty = availableAmbulances === 0 ? 25 : availableAmbulances < 3 ? 10 : 0;
-    medProb = Math.min(99, Math.floor(15 + medCount * 20 + heatProb * 0.3 + medResourcePenalty));
-    
-    infraProb = Math.min(99, Math.floor(5 + waterCount * 30 + heatProb * 0.1));
+    if (incCategory.includes('medical') || incCategory.includes('health')) {
+       heatProb = 70 + (variance % 16);
+       crowdProb = 40 + (variance % 21);
+       medProb = 80 + (variance % 16);
+       infraProb = 10 + (variance % 16);
+    } else if (incCategory.includes('crowd') || incCategory.includes('surge')) {
+       heatProb = 40 + (variance % 21);
+       crowdProb = 80 + (variance % 16);
+       medProb = 30 + (variance % 21);
+       infraProb = 15 + (variance % 16);
+    } else if (incCategory.includes('fire')) {
+       heatProb = 20 + (variance % 21);
+       crowdProb = 50 + (variance % 21);
+       medProb = 70 + (variance % 21);
+       infraProb = 60 + (variance % 31);
+    } else if (incCategory.includes('lost') || incCategory.includes('child')) {
+       heatProb = 20 + (variance % 21);
+       crowdProb = 40 + (variance % 21);
+       medProb = 10 + (variance % 21);
+       infraProb = 10 + (variance % 11);
+    } else {
+       const medCount = activeIncidents.filter(i => (i.category || '').toLowerCase().includes('medical')).length || 0;
+       const crowdCount = activeIncidents.filter(i => (i.category || '').toLowerCase().includes('crowd')).length || 0;
+       
+       heatProb = Math.min(85, 30 + (medCount * 5) + variance);
+       crowdProb = Math.min(80, 35 + (crowdCount * 8) + variance);
+       medProb = Math.min(85, 20 + (medCount * 10) + variance);
+       infraProb = Math.min(60, 15 + variance);
+    }
 
     return [
       { label: 'Heat Stress Probability', val: Math.max(5, heatProb), color: 'bg-critical' },
@@ -308,11 +350,79 @@ const MemoryAI = () => {
   const timeline = generateTimelineArray();
   const recommendations = dynamicPattern.recommendations;
   
-  // Calculate confidence dynamically
-  const baseConf = insightData?.confidence || 85;
-  const historyBonus = incidents.length > 5 ? 3 : 0;
-  const matchBonus = latestInc ? 4 : 0;
-  const confidenceScore = Math.min(99, baseConf + historyBonus + matchBonus);
+  // Calculate confidence dynamically based on severity
+  let confidenceScore = 85;
+  if (latestInc) {
+    const sev = (latestInc.severity || '').toLowerCase();
+    const idNum = Number(latestInc.id || 0);
+    if (sev === 'critical') confidenceScore = 92 + (idNum % 5);
+    else if (sev === 'high') confidenceScore = 85 + (idNum % 8);
+    else if (sev === 'medium') confidenceScore = 70 + (idNum % 16);
+    else confidenceScore = 60 + (idNum % 16);
+  }
+  
+  // Calculate predicted escalation dynamically
+  let predictedEscalation = 'Monitoring';
+  if (latestInc) {
+    if (incCategory.includes('medical')) predictedEscalation = '4-8 mins';
+    else if (incCategory.includes('crowd')) predictedEscalation = '8-15 mins';
+    else if (incCategory.includes('fire')) predictedEscalation = '2-5 mins';
+    else if (incCategory.includes('lost') || incCategory.includes('child')) predictedEscalation = '10-20 mins';
+    else if (incCategory.includes('water')) predictedEscalation = '20-45 mins';
+    else predictedEscalation = '8-12 mins';
+  }
+
+  let graphNodes = [];
+  if (incCategory.includes('fire')) {
+     graphNodes = [
+       { label: 'Fire Signal', icon: ShieldAlert, x: '20%', y: '20%', color: 'text-critical', bg: 'bg-critical/20', border: 'border-critical/50' },
+       { label: 'Risk Prediction', icon: Activity, x: '80%', y: '20%', color: 'text-warning', bg: 'bg-warning/20', border: 'border-warning/50' },
+       { label: 'Evacuation AI', icon: Users, x: '15%', y: '50%', color: 'text-primary', bg: 'bg-primary/20', border: 'border-primary/50' },
+       { label: 'Fire Response', icon: HeartPulse, x: '85%', y: '50%', color: 'text-safe', bg: 'bg-safe/20', border: 'border-safe/50' },
+       { label: 'Broadcast Agent', icon: MessageSquareWarning, x: '30%', y: '85%', color: 'text-orange-500', bg: 'bg-orange-500/20', border: 'border-orange-500/50' },
+     ];
+  } else if (incCategory.includes('crowd') || incCategory.includes('surge')) {
+     graphNodes = [
+       { label: 'Crowd Intel', icon: Users, x: '20%', y: '20%', color: 'text-primary', bg: 'bg-primary/20', border: 'border-primary/50' },
+       { label: 'Density Monitor', icon: Activity, x: '80%', y: '20%', color: 'text-warning', bg: 'bg-warning/20', border: 'border-warning/50' },
+       { label: 'Gate Flow AI', icon: Network, x: '15%', y: '50%', color: 'text-cyan-400', bg: 'bg-cyan-400/20', border: 'border-cyan-400/50' },
+       { label: 'Security Dispatch', icon: ShieldAlert, x: '85%', y: '50%', color: 'text-critical', bg: 'bg-critical/20', border: 'border-critical/50' },
+       { label: 'Diversion Control', icon: MessageSquareWarning, x: '30%', y: '85%', color: 'text-orange-500', bg: 'bg-orange-500/20', border: 'border-orange-500/50' },
+     ];
+  } else if (incCategory.includes('medical') || incCategory.includes('health')) {
+     graphNodes = [
+       { label: 'Incident Class', icon: ShieldAlert, x: '20%', y: '20%', color: 'text-critical', bg: 'bg-critical/20', border: 'border-critical/50' },
+       { label: 'Risk Prediction', icon: Activity, x: '80%', y: '20%', color: 'text-warning', bg: 'bg-warning/20', border: 'border-warning/50' },
+       { label: 'Medical Intel', icon: HeartPulse, x: '15%', y: '50%', color: 'text-safe', bg: 'bg-safe/20', border: 'border-safe/50' },
+       { label: 'Resource Optimizer', icon: Network, x: '85%', y: '50%', color: 'text-cyan-400', bg: 'bg-cyan-400/20', border: 'border-cyan-400/50' },
+       { label: 'Ambulance Routing', icon: Network, x: '30%', y: '85%', color: 'text-primary', bg: 'bg-primary/20', border: 'border-primary/50' },
+     ];
+  } else if (incCategory.includes('lost') || incCategory.includes('child')) {
+     graphNodes = [
+       { label: 'Missing Person Signal', icon: ShieldAlert, x: '20%', y: '20%', color: 'text-critical', bg: 'bg-critical/20', border: 'border-critical/50' },
+       { label: 'Crowd Flow Analysis', icon: Users, x: '80%', y: '20%', color: 'text-primary', bg: 'bg-primary/20', border: 'border-primary/50' },
+       { label: 'Search Zone AI', icon: Activity, x: '15%', y: '50%', color: 'text-warning', bg: 'bg-warning/20', border: 'border-warning/50' },
+       { label: 'Volunteer Dispatch', icon: HeartPulse, x: '85%', y: '50%', color: 'text-safe', bg: 'bg-safe/20', border: 'border-safe/50' },
+       { label: 'Reunification Center', icon: Network, x: '30%', y: '85%', color: 'text-cyan-400', bg: 'bg-cyan-400/20', border: 'border-cyan-400/50' },
+     ];
+  } else if (incCategory.includes('water') || incCategory.includes('infrastructure')) {
+     graphNodes = [
+       { label: 'Infrastructure Signal', icon: ShieldAlert, x: '20%', y: '20%', color: 'text-critical', bg: 'bg-critical/20', border: 'border-critical/50' },
+       { label: 'Demand Monitor', icon: Activity, x: '80%', y: '20%', color: 'text-warning', bg: 'bg-warning/20', border: 'border-warning/50' },
+       { label: 'Water Supply AI', icon: Network, x: '15%', y: '50%', color: 'text-cyan-400', bg: 'bg-cyan-400/20', border: 'border-cyan-400/50' },
+       { label: 'Resource Optimizer', icon: Users, x: '85%', y: '50%', color: 'text-primary', bg: 'bg-primary/20', border: 'border-primary/50' },
+       { label: 'Broadcast Agent', icon: MessageSquareWarning, x: '30%', y: '85%', color: 'text-orange-500', bg: 'bg-orange-500/20', border: 'border-orange-500/50' },
+     ];
+  } else {
+     graphNodes = [
+       { label: 'Incident Class', icon: ShieldAlert, x: '20%', y: '20%', color: 'text-critical', bg: 'bg-critical/20', border: 'border-critical/50' },
+       { label: 'Risk Prediction', icon: Activity, x: '80%', y: '20%', color: 'text-warning', bg: 'bg-warning/20', border: 'border-warning/50' },
+       { label: 'Crowd Intel', icon: Users, x: '15%', y: '50%', color: 'text-primary', bg: 'bg-primary/20', border: 'border-primary/50' },
+       { label: 'Medical Intel', icon: HeartPulse, x: '85%', y: '50%', color: 'text-safe', bg: 'bg-safe/20', border: 'border-safe/50' },
+       { label: 'Resource Optimizer', icon: Network, x: '30%', y: '85%', color: 'text-cyan-400', bg: 'bg-cyan-400/20', border: 'border-cyan-400/50' },
+       { label: 'Broadcast Agent', icon: MessageSquareWarning, x: '70%', y: '85%', color: 'text-orange-500', bg: 'bg-orange-500/20', border: 'border-orange-500/50' },
+     ];
+  }
 
   return (
     <div className="flex flex-col gap-6 pb-10">
@@ -361,7 +471,7 @@ const MemoryAI = () => {
         {[
           { label: 'Historical Incidents Analyzed', value: '48,291', sub: `Live today: ${incidents.length}`, color: 'text-primary', border: 'border-primary/30', bg: 'bg-primary/5' },
           { label: 'Linked Signals', value: dynamicPattern.signals.length, sub: 'Correlated data points', color: 'text-secondary', border: 'border-secondary/30', bg: 'bg-secondary/5' },
-          { label: 'Predicted Escalation', value: latestInc ? '8-12 mins' : 'Monitoring', sub: 'Estimated timeframe', color: 'text-critical', border: 'border-critical/30', bg: 'bg-critical/5' },
+          { label: 'Predicted Escalation', value: predictedEscalation, sub: 'Estimated timeframe', color: 'text-critical', border: 'border-critical/30', bg: 'bg-critical/5' },
           { label: 'AI Confidence', value: `${confidenceScore}%`, sub: 'Synthesis certainty', color: 'text-safe', border: 'border-safe/30', bg: 'bg-safe/5' }
         ].map((stat, i) => (
           <div key={i} className={`glass-card p-5 border ${stat.border} ${stat.bg} shadow-[0_0_15px_rgba(0,0,0,0.2)] hover:-translate-y-1 transition-transform`}>
@@ -395,12 +505,12 @@ const MemoryAI = () => {
                    <stop offset="100%" stopColor="#0ea5e9" stopOpacity="0.8" />
                  </linearGradient>
                </defs>
-               <line x1="20%" y1="20%" x2="50%" y2="50%" stroke="url(#lineGrad)" strokeWidth="2" strokeDasharray="4 4" className={`transition-opacity duration-1000 ${dynamicPattern.nodes.includes('Incident Class.') ? 'animate-[pulse_2s_ease-in-out_infinite] opacity-100' : 'opacity-10'}`} />
-               <line x1="80%" y1="20%" x2="50%" y2="50%" stroke="url(#lineGrad)" strokeWidth="2" strokeDasharray="4 4" className={`transition-opacity duration-1000 ${dynamicPattern.nodes.includes('Risk Prediction') ? 'animate-[pulse_2.5s_ease-in-out_infinite] opacity-100' : 'opacity-10'}`} />
-               <line x1="15%" y1="50%" x2="50%" y2="50%" stroke="url(#lineGrad)" strokeWidth="2" strokeDasharray="4 4" className={`transition-opacity duration-1000 ${dynamicPattern.nodes.includes('Crowd Intel') ? 'animate-[pulse_1.5s_ease-in-out_infinite] opacity-100' : 'opacity-10'}`} />
-               <line x1="85%" y1="50%" x2="50%" y2="50%" stroke="url(#lineGrad)" strokeWidth="2" strokeDasharray="4 4" className={`transition-opacity duration-1000 ${dynamicPattern.nodes.includes('Medical Intel') ? 'animate-[pulse_3s_ease-in-out_infinite] opacity-100' : 'opacity-10'}`} />
-               <line x1="30%" y1="85%" x2="50%" y2="50%" stroke="url(#lineGrad)" strokeWidth="2" strokeDasharray="4 4" className={`transition-opacity duration-1000 ${dynamicPattern.nodes.includes('Resource Opt.') ? 'animate-[pulse_2s_ease-in-out_infinite] opacity-100' : 'opacity-10'}`} />
-               <line x1="70%" y1="85%" x2="50%" y2="50%" stroke="url(#lineGrad)" strokeWidth="2" strokeDasharray="4 4" className={`transition-opacity duration-1000 ${dynamicPattern.nodes.includes('Broadcast Agent') ? 'animate-[pulse_2.2s_ease-in-out_infinite] opacity-100' : 'opacity-10'}`} />
+               {graphNodes.map((node, i) => {
+                  const isActive = dynamicPattern.nodes.includes(node.label);
+                  return (
+                    <line key={`line-${i}`} x1={node.x} y1={node.y} x2="50%" y2="50%" stroke="url(#lineGrad)" strokeWidth="2" strokeDasharray="4 4" className={`transition-opacity duration-1000 ${isActive ? `animate-[pulse_${2 + (i % 3)}s_ease-in-out_infinite] opacity-100` : 'opacity-10'}`} />
+                  )
+               })}
             </svg>
 
             {/* Central Node */}
@@ -414,14 +524,7 @@ const MemoryAI = () => {
             </div>
 
             {/* Surrounding Nodes */}
-            {[
-              { label: 'Incident Class.', icon: ShieldAlert, x: '20%', y: '20%', color: 'text-critical', bg: 'bg-critical/20', border: 'border-critical/50' },
-              { label: 'Risk Prediction', icon: Activity, x: '80%', y: '20%', color: 'text-warning', bg: 'bg-warning/20', border: 'border-warning/50' },
-              { label: 'Crowd Intel', icon: Users, x: '15%', y: '50%', color: 'text-primary', bg: 'bg-primary/20', border: 'border-primary/50' },
-              { label: 'Medical Intel', icon: HeartPulse, x: '85%', y: '50%', color: 'text-safe', bg: 'bg-safe/20', border: 'border-safe/50' },
-              { label: 'Resource Opt.', icon: Network, x: '30%', y: '85%', color: 'text-cyan-400', bg: 'bg-cyan-400/20', border: 'border-cyan-400/50' },
-              { label: 'Broadcast Agent', icon: MessageSquareWarning, x: '70%', y: '85%', color: 'text-orange-500', bg: 'bg-orange-500/20', border: 'border-orange-500/50' },
-            ].map((node, i) => {
+            {graphNodes.map((node, i) => {
               const isActive = dynamicPattern.nodes.includes(node.label);
               return (
               <div key={i} className="absolute z-10 flex flex-col items-center group cursor-pointer transition-all duration-500" style={{ top: node.y, left: node.x, transform: 'translate(-50%, -50%)', opacity: isActive ? 1 : 0.4 }}>
@@ -482,7 +585,7 @@ const MemoryAI = () => {
                <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-gray-400">Confidence:</span> <span className="font-bold text-safe">{confidenceScore}%</span></div>
                <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-gray-400">Level:</span> <span className="font-bold text-white">{latestInc?.severity || 'Normal'}</span></div>
                <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-gray-400">Sources:</span> <span className="font-bold">{incidents.length > 0 ? 'Live Telemetry + History' : 'Baseline Array'}</span></div>
-               <div className="flex justify-between pt-1"><span className="text-gray-400">Model:</span> <span className="text-[#8b5cf6] font-mono text-[9px]">{insightData?.ml_model_name || 'Neural Net v4.1'}</span></div>
+               <div className="flex justify-between pt-1"><span className="text-gray-400">Model:</span> <span className="text-[#8b5cf6] font-mono text-[9px]">Operational Risk Model v4.1</span></div>
             </div>
           </div>
           
