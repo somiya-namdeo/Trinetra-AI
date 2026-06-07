@@ -70,8 +70,12 @@ const Navbar = () => {
         </div>
       )}
 
-      {/* Left: Live Ops Status */}
-      <div className="flex-1 flex justify-start">
+      {/* Left: Branding & Live Ops Status */}
+      <div className="flex-1 flex justify-start items-center gap-4">
+        <div className="flex items-center gap-3">
+          <img src="/logo.png" alt="Trinetra AI Logo" className="w-11 h-11 rounded object-contain bg-primary/10 p-0.5" />
+          <span className="text-white font-bold tracking-wide hidden sm:block">Trinetra AI</span>
+        </div>
         <div className="flex items-center gap-2 bg-critical/10 text-critical border border-critical/30 px-3 py-1.5 rounded-full text-xs font-semibold">
           <div className="w-2 h-2 rounded-full bg-critical animate-pulse"></div>
           LIVE OPS

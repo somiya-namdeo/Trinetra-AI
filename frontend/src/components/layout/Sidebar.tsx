@@ -25,13 +25,13 @@ const Sidebar = () => {
         className={`p-6 flex items-center ${isCollapsed ? 'justify-center px-0' : 'gap-3'} h-[88px] cursor-pointer hover:opacity-80 transition-opacity`}
         title="Return to Landing Page"
       >
-        <div className="bg-primary/20 p-2 rounded-lg text-primary shrink-0">
-          <Shield size={24} />
+        <div className="shrink-0">
+          <img src="/logo.png" alt="Trinetra AI Logo" className="w-16 h-16 rounded-xl object-contain bg-primary/10 p-1" />
         </div>
         {!isCollapsed && (
           <div className="overflow-hidden whitespace-nowrap">
             <h1 className="font-bold text-lg tracking-wide text-white">Trinetra AI</h1>
-            <p className="text-[10px] text-gray-400 uppercase tracking-widest">Emergency Intelligence</p>
+            <p className="text-[10px] text-gray-400 uppercase tracking-widest truncate">AI Emergency Intelligence Platform</p>
           </div>
         )}
       </div>

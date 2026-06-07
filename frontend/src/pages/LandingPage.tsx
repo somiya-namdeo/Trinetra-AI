@@ -51,9 +51,7 @@ const LandingPage = () => {
       <header className="border-b border-cardBorder/50 bg-background/80 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-primary/20 p-2 rounded-lg text-primary border border-primary/30">
-              <Shield size={32} />
-            </div>
+            <img src="/logo.png" alt="Trinetra AI Logo" className="w-10 h-10 object-contain rounded-xl bg-primary/10 p-1" />
             <div>
               <h1 className="font-extrabold text-2xl tracking-wide text-white">Trinetra AI</h1>
               <p className="text-[11px] text-primary uppercase tracking-widest font-bold">Where Foresight Becomes Protection</p>
@@ -79,6 +77,9 @@ const LandingPage = () => {
         <div className="absolute bottom-20 left-1/4 w-56 h-56 border border-purple-500/20 rounded-full animate-float-delayed opacity-40 shadow-[0_0_30px_rgba(168,85,247,0.1)]"></div>
 
         <div className="md:w-3/5 text-left relative z-10">
+          <div className="flex justify-center md:justify-start w-full mb-8">
+            <img src="/logo.png" alt="Trinetra AI Logo" className="w-[100px] h-[100px] object-contain rounded-2xl bg-primary/10 p-2 shadow-[0_0_30px_rgba(14,165,233,0.3)]" />
+          </div>
           <div className="inline-flex items-center gap-3 mb-8 px-1.5 rounded-full bg-cardBorder/40 border border-cardBorder p-1.5 pr-5 shadow-lg">
             <div className="relative flex items-center justify-center px-4 py-1.5 bg-card rounded-full overflow-hidden group">
               <div className="absolute inset-[-100%] bg-[conic-gradient(from_90deg_at_50%_50%,#00000000_50%,#0ea5e9_100%)] animate-border-spin group-hover:opacity-100 opacity-70"></div>
