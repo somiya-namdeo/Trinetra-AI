@@ -5,17 +5,16 @@
 # Trinetra AI
 ### AI-Powered Emergency Intelligence & Incident Management Platform
 
-[![Frontend](https://img.shields.io/badge/Frontend-React%20%7C%20TypeScript-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
-[![Backend](https://img.shields.io/badge/Backend-FastAPI%20%7C%20Python-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Database](https://img.shields.io/badge/Database-Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
-[![AI Engine](https://img.shields.io/badge/AI_Engine-Gemini_AI-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
-[![Deployment](https://img.shields.io/badge/Deployment-Vercel%20%7C%20Render-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
+[![Frontend](https://img.shields.io/badge/React%20%7C%20TypeScript-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
+[![Backend](https://img.shields.io/badge/FastAPI%20%7C%20Python-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Database](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+[![AI Engine](https://img.shields.io/badge/Gemini_AI-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
+[![Deployment](https://img.shields.io/badge/Vercel%20%7C%20Render-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge)]()
 
 <br />
 
-[Live Application](https://trinetra-ai-eight.vercel.app) · [Backend API](https://trinetra-ai-m39e.onrender.com) · [API Documentation](https://trinetra-ai-m39e.onrender.com/docs) · [GitHub Repository](https://github.com/)
+[Live Application](https://trinetra-ai-eight.vercel.app) · [Backend API](https://trinetra-ai-m39e.onrender.com) · [API Documentation](https://trinetra-ai-m39e.onrender.com/docs)
 
 </div>
 
@@ -31,40 +30,27 @@ Designed for smart cities, large-scale events (such as the Mahakumbh), and natio
 
 ---
 
-## Architecture Diagram
+## Why Trinetra AI Matters
 
-```mermaid
-graph TD
-    classDef user fill:#2C3E50,stroke:#34495E,stroke-width:2px,color:#fff;
-    classDef process fill:#2980B9,stroke:#2980B9,stroke-width:2px,color:#fff;
-    classDef ai fill:#8E44AD,stroke:#8E44AD,stroke-width:2px,color:#fff;
-    classDef core fill:#27AE60,stroke:#27AE60,stroke-width:2px,color:#fff;
-    
-    A[Citizen / Operator]:::user -->|Incident Report| B(AI Analysis Engine):::ai
-    B -->|Severity Detection| C{Risk Scoring}:::process
-    C -->|High Priority| D[Resource Allocation]:::core
-    C -->|Pattern Detected| E[Memory AI]:::ai
-    E --> F[Command Center Dashboard]:::process
-    D --> F
-    F --> G[Emergency Response Teams]:::user
-```
+Trinetra AI addresses critical bottlenecks in public safety through technological innovation:
+
+* **Real-Time Emergency Response**: Autonomous processing reduces dispatch latency during life-threatening events.
+* **AI-Assisted Triage**: Utilizing Deep Learning LLMs to eliminate manual report classification errors.
+* **Cloud-Deployed Full-Stack System**: Highly available infrastructure ready for high-throughput traffic.
+* **Scalable Smart City Use Case**: Built to integrate with municipal sensors, CCTV analytics, and mobile dispatch units.
+* **Production-Ready APIs**: Professionally documented and secured backend services.
+* **Supabase-Backed Persistence**: Reliable, scalable, and secure Postgres database management.
 
 ---
 
-## Workflow Diagram
+## Technical Highlights
 
-```mermaid
-flowchart LR
-    classDef standard fill:#34495E,stroke:#2C3E50,stroke-width:2px,color:#fff;
-    classDef highlight fill:#E74C3C,stroke:#C0392B,stroke-width:2px,color:#fff;
-    
-    A[Incident]:::standard --> B[AI Classification]:::standard
-    B --> C[Priority Score]:::standard
-    C --> D[Resource Assignment]:::highlight
-    D --> E[Zone Monitoring]:::standard
-    E --> F[Resolution]:::standard
-    F --> G[Historical Learning]:::standard
-```
+* **Frontend**: React and TypeScript application utilizing Vite, Tailwind CSS, and Framer Motion for a fluid, zero-latency command center interface.
+* **Backend**: Asynchronous FastAPI Python architecture delivering high-performance telemetry processing.
+* **Database**: Supabase integration for reliable operational persistence and geographic incident mapping.
+* **AI Engine**: DeepMind Gemini integration for natural language processing, priority scoring, and tactical resource recommendations.
+* **Deployment**: Frontend hosted on Vercel Edge Network, Backend hosted on Render with fully resolved cross-origin (CORS) integration.
+* **API Availability**: Auto-generated interactive Swagger UI documentation available at `/docs`.
 
 ---
 
@@ -77,71 +63,114 @@ flowchart LR
 | **Resource Management** | Autonomous dispatch logic that matches the nearest and most capable field units to critical incidents. |
 | **Zone Intelligence** | Geographic risk profiling mapping crowd density, active incidents, and infrastructural strain. |
 | **Risk Scoring** | Dynamic algorithms evaluate incoming threats and apply quantifiable priority scores for triage. |
-| **Telemetry Monitoring** | Continuous ingestion of live data across all active operational zones. |
-| **Lifecycle Management** | End-to-end incident tracking from initial report through dispatch, containment, and resolution. |
-| **Analytics Dashboard** | Real-time performance metrics, resource utilization rates, and operational overviews. |
-| **Decision Support System** | Executive-level strategic recommendations generated by machine learning models. |
 
 ---
 
 ## Platform Screenshots
 
-### Landing Page
-![Landing Page](screenshots/landing-page.png)
-
 ### Mission Control Dashboard
+Centralized operational overview displaying active incidents, predictive threat analytics, and resource utilization.
 ![Dashboard](screenshots/dashboard.png)
 
 ### Incident Management
+Real-time feed of active emergencies with AI-generated priority scoring and tactical response recommendations.
 ![Incidents](screenshots/incidents.png)
 
 ### Resource Command Center
+Live tracking of available response units, medical teams, and security personnel across designated sectors.
 ![Resources](screenshots/resources.png)
 
 ### Emergency Memory AI
+Predictive intelligence engine analyzing historical patterns to detect non-obvious correlations and escalating threats.
 ![Memory AI](screenshots/memory-AI.png)
 
+### Landing Page
+Public-facing gateway for the intelligence platform.
+![Landing Page](screenshots/landing-page.png)
+
 ### Analytics Dashboard
+Executive-level metrics tracking response times, resolution rates, and system efficiency.
 ![Analytics](screenshots/analytics.png)
 
 ### Alerts Management
+Automated public safety broadcasts and internal operational alerts.
 ![Alerts](screenshots/alerts.png)
 
 ### Settings
+System configuration and parameter tuning.
 ![Settings](screenshots/settings.png)
 
 ---
 
-## Technology Stack
+## Architecture Diagrams
 
-### Frontend Architecture
-| Technology | Implementation Focus |
-| :--- | :--- |
-| **React** | Component-based UI rendering |
-| **TypeScript** | Static typing and interface enforcement |
-| **Vite** | Lightning-fast build tooling and HMR |
-| **Tailwind CSS** | Utility-first responsive design framework |
-| **Framer Motion** | High-performance fluid animations |
+### Main System Architecture
 
-### Backend Architecture
-| Technology | Implementation Focus |
-| :--- | :--- |
-| **FastAPI** | High-performance asynchronous API framework |
-| **Python** | Core server logic and AI integration |
-| **Uvicorn** | ASGI web server implementation |
-| **Pydantic** | Data validation and settings management |
+```mermaid
+graph TD
+    classDef user fill:#2C3E50,stroke:#34495E,stroke-width:2px,color:#fff;
+    classDef core fill:#2980B9,stroke:#2980B9,stroke-width:2px,color:#fff;
+    classDef ai fill:#8E44AD,stroke:#8E44AD,stroke-width:2px,color:#fff;
+    classDef db fill:#27AE60,stroke:#27AE60,stroke-width:2px,color:#fff;
+    classDef module fill:#D35400,stroke:#D35400,stroke-width:2px,color:#fff;
 
-### Data & AI Layer
-| Technology | Implementation Focus |
-| :--- | :--- |
-| **Supabase** | PostgreSQL database and real-time syncing |
-| **Gemini AI** | Deep learning LLM for incident classification |
+    A[Operator / Citizen]:::user --> B[Incident Input]:::core
+    B --> C[FastAPI Backend]:::core
+    
+    C --> D[AI Analysis Engine]:::ai
+    C --> M1[Memory AI]:::module
+    C --> M2[Resource Allocation]:::module
+    C --> M3[Zone Intelligence]:::module
+    C --> M4[Telemetry]:::module
+    
+    D --> E[Classification + Severity + Risk Score]:::ai
+    E --> F[(Supabase Database)]:::db
+    
+    M1 --> F
+    M2 --> F
+    M3 --> F
+    M4 --> F
+    
+    F --> G[Command Center Dashboard]:::core
+    G --> H[Response Teams]:::user
+```
 
-### Deployment Infrastructure
-| Component | Provider |
-| :--- | :--- |
-| **Frontend Hosting** | Vercel |
-| **Backend Hosting** | Render |
+### Deployment Architecture
+
+```mermaid
+graph LR
+    classDef web fill:#2C3E50,stroke:#34495E,stroke-width:2px,color:#fff;
+    classDef host fill:#000000,stroke:#000000,stroke-width:2px,color:#fff;
+    classDef backend fill:#009688,stroke:#009688,stroke-width:2px,color:#fff;
+    classDef db fill:#3ECF8E,stroke:#3ECF8E,stroke-width:2px,color:#fff;
+    classDef ai fill:#4285F4,stroke:#4285F4,stroke-width:2px,color:#fff;
+
+    A[User Browser]:::web --> B[Vercel Frontend]:::host
+    B --> C[Render FastAPI Backend]:::backend
+    C -->|Persistence| D[(Supabase Database)]:::db
+    C -->|Inference| E[Gemini AI Service]:::ai
+    C -.->|Swagger UI| F[/docs API Docs]:::web
+```
+
+### Operational Workflow
+
+```mermaid
+flowchart LR
+    classDef standard fill:#34495E,stroke:#2C3E50,stroke-width:2px,color:#fff;
+    classDef decision fill:#8E44AD,stroke:#8E44AD,stroke-width:2px,color:#fff;
+    classDef action fill:#E74C3C,stroke:#C0392B,stroke-width:2px,color:#fff;
+
+    A[Incident Report]:::standard --> B[AI Classification]:::standard
+    B --> C[Risk Score]:::standard
+    C --> D{Critical?}:::decision
+    D -->|Yes| E[Immediate Response & Resource Allocation]:::action
+    D -->|No| F[Standard Monitoring]:::standard
+    E --> G[Zone Tracking]:::standard
+    F --> G
+    G --> H[Status Update]:::standard
+    H --> I[Resolution]:::standard
+    I --> J[Memory Learning]:::standard
+```
 
 ---
 
@@ -149,18 +178,22 @@ flowchart LR
 
 ```mermaid
 erDiagram
-    INCIDENTS ||--o{ RESOURCES : requires
     ZONES ||--o{ INCIDENTS : contains
+    INCIDENTS ||--o{ RESOURCES : requires
     INCIDENTS ||--o{ PATTERNS : generates
     PATTERNS ||--o{ MEMORY_INSIGHTS : correlates
+    
+    ZONES {
+        uuid id PK
+        string name
+        string risk_level
+    }
     
     INCIDENTS {
         uuid id PK
         string title
         string status
         string severity
-        string location
-        string category
         integer priority_score
     }
     
@@ -169,28 +202,16 @@ erDiagram
         string name
         string type
         string status
-        string location
-        uuid assigned_incident_id FK
-    }
-    
-    ZONES {
-        uuid id PK
-        string name
-        string risk_level
-        integer risk_score
-        boolean model_used
     }
     
     PATTERNS {
         uuid id PK
         string pattern_type
-        json signals
     }
     
     MEMORY_INSIGHTS {
         uuid id PK
         string pattern_detected
-        json reasoning_trace
         integer confidence
     }
 ```
@@ -199,17 +220,17 @@ erDiagram
 
 ## API Architecture
 
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/incidents` | Retrieve all active and historical incidents |
-| `POST` | `/api/incidents/create` | Register a new incident |
-| `POST` | `/api/incidents/analyze` | Process raw report text through Gemini AI |
-| `POST` | `/api/incidents/update_status` | Advance an incident through its lifecycle |
-| `GET` | `/api/resources` | Fetch all field units and operational statuses |
-| `GET` | `/api/zones` | Retrieve geographical risk assessments |
-| `GET` | `/api/patterns` | Fetch established historical threat patterns |
-| `GET` | `/api/memory-ai/insight` | Generate predictive insights via Memory AI |
-| `GET` | `/api/telemetry` | Stream live operational metrics |
+| Method | Endpoint | Purpose | Used By |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/incidents` | Retrieve all active and historical incidents | Mission Control, Incident Log |
+| `POST` | `/api/incidents/create` | Register a new incident into the system | Incident Reporting Form |
+| `POST` | `/api/incidents/analyze` | Process raw report text via Gemini AI | AI Triage Engine |
+| `POST` | `/api/incidents/update_status` | Advance an incident through its lifecycle | Dispatchers, Response Teams |
+| `GET` | `/api/resources` | Fetch all field units and operational statuses | Resource Command Center |
+| `GET` | `/api/zones` | Retrieve geographical risk assessments | Tactical Map, Zone Intelligence |
+| `GET` | `/api/patterns` | Fetch established historical threat patterns | Memory AI Engine |
+| `GET` | `/api/memory-ai/insight` | Generate predictive insights | Dashboard, Memory AI Panel |
+| `GET` | `/api/telemetry` | Stream live operational metrics | Analytics Dashboard |
 
 ---
 
@@ -218,36 +239,22 @@ erDiagram
 ```text
 trinetra-ai/
 ├── backend/
-│   ├── api/
-│   ├── models/
-│   ├── routes/
-│   │   ├── alerts.py
-│   │   ├── api.py
-│   │   ├── incidents.py
-│   │   ├── memory_ai.py
-│   │   ├── resources.py
-│   │   └── zones.py
-│   ├── services/
-│   │   ├── ai_service.py
-│   │   ├── data_loader.py
-│   │   ├── memory_ai.py
-│   │   ├── risk_engine.py
-│   │   └── supabase_service.py
-│   ├── main.py
-│   └── requirements.txt
+│   ├── models/            # Pydantic schemas and validation
+│   ├── routes/            # FastAPI endpoint definitions
+│   ├── services/          # Business logic, AI, and Supabase integration
+│   ├── main.py            # FastAPI entry point and CORS configuration
+│   └── requirements.txt   # Python dependencies
 ├── frontend/
 │   ├── src/
-│   │   ├── components/
-│   │   ├── data/
-│   │   ├── pages/
-│   │   ├── services/
-│   │   │   └── api.ts
-│   │   ├── App.tsx
-│   │   └── main.tsx
-│   ├── public/
-│   ├── package.json
-│   ├── tailwind.config.js
-│   └── vite.config.ts
+│   │   ├── components/    # Reusable React components
+│   │   ├── pages/         # Primary application views
+│   │   ├── services/      # Axios/Fetch API wrappers
+│   │   ├── App.tsx        # Router configuration
+│   │   └── main.tsx       # React DOM mount
+│   ├── public/            # Static assets and branding
+│   ├── package.json       # Node dependencies
+│   ├── tailwind.config.js # Styling configuration
+│   └── vite.config.ts     # Build tooling
 └── README.md
 ```
 
@@ -308,69 +315,6 @@ VITE_API_URL=http://localhost:8000
 ```bash
 npm run dev
 ```
-
----
-
-## AI Intelligence Engine
-
-Trinetra AI employs a multi-layered artificial intelligence approach to emergency management:
-
-* **Incident Classification**: Utilizes Large Language Models (LLMs) to ingest unstructured reporting data and extract structural taxonomies (e.g., Medical, Fire, Crowd Surge).
-* **Severity Analysis**: Contextualizes reporting vocabulary and infrastructural proximity to determine the immediate threat level.
-* **Risk Assessment**: Continuously evaluates geographic zones against live telemetry to score regional instability.
-* **Memory Correlation**: Cross-references incoming data against a persistent vector database of historical incidents to identify escalating threat signatures.
-* **Pattern Detection**: Monitors frequency graphs to identify distributed, non-obvious operational anomalies.
-* **Resource Recommendation**: Calculates the optimal unit dispatch based on proximity, capability, and current deployment status.
-
----
-
-## Scalability & Real-World Applications
-
-Trinetra AI is engineered for high-throughput, high-stakes environments:
-
-* **Smart Cities**: Integration with municipal IoT grids for centralized urban oversight.
-* **Disaster Management**: Rapid deployment coordination during natural disasters.
-* **Police Operations**: Force multiplication through predictive threat deployment.
-* **Healthcare Emergencies**: Optimized routing for ambulance and medical triage teams.
-* **Crowd Control**: Predictive density management for high-capacity venues.
-* **Government Command Centers**: Unified operational intelligence for state and federal agencies.
-* **Public Events**: Dedicated telemetry monitoring for concerts, protests, and parades.
-* **Mahakumbh Scale Deployments**: Built specifically to handle the immense logistical and safety requirements of the world's largest human gatherings.
-
----
-
-## Security & Reliability
-
-* **Input Validation**: Strict schema enforcement via Pydantic on all API endpoints.
-* **Secure APIs**: CORS middleware configuration and environment-isolated credentials.
-* **Fault Tolerance**: Fallback mechanisms utilizing local JSON indexing if the primary Supabase cluster experiences downtime.
-* **Monitoring**: Integrated telemetry tracking for API latency and error rates.
-* **Error Handling**: Graceful frontend degradation with localized error boundaries protecting core dashboard functionality.
-
----
-
-## Future Roadmap
-
-* **Computer Vision**: Integration with live IP camera feeds for autonomous anomaly detection.
-* **CCTV Analytics**: Behavioral analysis algorithms for crowd panic and weapon detection.
-* **GIS Mapping**: Advanced geospatial layers detailing exact infrastructure routing and topology.
-* **Predictive Risk Forecasting**: Long-term machine learning models projecting threats hours in advance.
-* **Drone Surveillance**: API integrations for automated drone dispatch and aerial telemetry ingestion.
-* **Mobile Responder App**: Dedicated progressive web application for field units to update statuses natively.
-* **Multi-Language Support**: Complete localization of all intelligence interfaces and alerts.
-* **LLM-Based Command Assistant**: A conversational interface allowing commanders to query live databases using natural language.
-
----
-
-## Why This Project Stands Out
-
-* **Full-Stack Engineering**: A complete, end-to-end operational platform combining a React/TypeScript frontend with a Python/FastAPI backend.
-* **Production Deployment**: fully deployed and accessible live via Vercel and Render cloud infrastructure.
-* **AI Integration**: Meaningful application of AI (Gemini) that directly solves real-world triage bottlenecks, rather than simple chatbot wrappers.
-* **Emergency Intelligence Domain**: Addresses a critical, high-impact public sector problem with a scalable technological solution.
-* **Scalable Architecture**: Built on modern, stateless principles allowing for horizontal scaling under extreme load.
-* **Real-Time Data Processing**: Asynchronous backend architecture specifically designed for low-latency operational environments.
-* **Modern Cloud Infrastructure**: Leveraging Supabase for robust PostgreSQL data persistence and real-time capabilities.
 
 ---
 
