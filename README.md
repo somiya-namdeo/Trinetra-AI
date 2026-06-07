@@ -229,25 +229,6 @@ erDiagram
     }
 ```
 
-### Operational Workflow
-
-```mermaid
-flowchart LR
-    classDef standard fill:#34495E,stroke:#2C3E50,stroke-width:2px,color:#fff;
-    classDef decision fill:#8E44AD,stroke:#8E44AD,stroke-width:2px,color:#fff;
-    classDef action fill:#E74C3C,stroke:#C0392B,stroke-width:2px,color:#fff;
-
-    A[Incident Report]:::standard --> B[AI Classification]:::standard
-    B --> C[Risk Score]:::standard
-    C --> D{Critical?}:::decision
-    D -->|Yes| E[Immediate Response & Resource Allocation]:::action
-    D -->|No| F[Standard Monitoring]:::standard
-    E --> G[Zone Tracking]:::standard
-    F --> G
-    G --> H[Status Update]:::standard
-    H --> I[Resolution]:::standard
-    I --> J[Memory Learning]:::standard
-```
 
 ---
 
