@@ -135,47 +135,6 @@ graph TD
     G --> H[Response Teams]:::user
 ```
 
-## Architecture Diagrams
-
-### Main System Architecture
-
-```mermaid
-flowchart TD
-
-    A["Operator / Citizen"]
-    B["Incident Input"]
-    C["FastAPI Backend"]
-    D["AI Analysis Engine"]
-    E["Classification, Severity & Risk Scoring"]
-    F["Memory AI"]
-    G["Resource Allocation"]
-    H["Zone Intelligence"]
-    I["Telemetry Engine"]
-    J[("Supabase Database")]
-    K["Command Center Dashboard"]
-    L["Emergency Response Teams"]
-
-    A --> B
-    B --> C
-
-    C --> D
-    D --> E
-
-    C --> F
-    C --> G
-    C --> H
-    C --> I
-
-    E --> J
-    F --> J
-    G --> J
-    H --> J
-    I --> J
-
-    J --> K
-    K --> L
-```
-
 ### Deployment Architecture
 
 ```mermaid
