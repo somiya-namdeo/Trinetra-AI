@@ -1,99 +1,388 @@
+<div align="center">
+
+<img src="frontend/public/logo.png" alt="Trinetra AI Logo" width="120" />
+
 # Trinetra AI
+### AI-Powered Emergency Intelligence & Incident Management Platform
 
-**Where Foresight Becomes Protection.**
+[![Frontend](https://img.shields.io/badge/Frontend-React%20%7C%20TypeScript-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
+[![Backend](https://img.shields.io/badge/Backend-FastAPI%20%7C%20Python-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Database](https://img.shields.io/badge/Database-Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+[![AI Engine](https://img.shields.io/badge/AI_Engine-Gemini_AI-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
+[![Deployment](https://img.shields.io/badge/Deployment-Vercel%20%7C%20Render-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
+[![Status](https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge)]()
 
-Trinetra AI is an advanced, AI-powered emergency operations and situational awareness platform. It provides real-time mission control, incident management, resource tracking, and predictive capabilities designed for mass-scale events like the Mahakumbh.
+<br />
 
----
+[Live Application](https://trinetra-ai-eight.vercel.app) · [Backend API](https://trinetra-ai-m39e.onrender.com) · [API Documentation](https://trinetra-ai-m39e.onrender.com/docs) · [GitHub Repository](https://github.com/)
 
-## 🎯 Overview
-
-Trinetra AI unifies field communications, crowd management analytics, and automated response protocols into a single, high-density professional dashboard. It enables emergency operators to monitor risk distributions, predict escalations, and issue multilingual public broadcasts instantly.
-
----
-
-## ✨ Features
-
-- **Mission Control Dashboard**: Real-time KPI tracking, interactive zone heat maps, and live incident feeds.
-- **Emergency Memory AI**: Predictive modeling that leverages historical cases to anticipate crowd movements and operational risks.
-- **Automated Triage**: Natural-language incident reporting with instant AI classification and severity scoring.
-- **Multilingual Broadcasting**: One-click generation and deployment of AI-drafted emergency alerts across various languages and digital signage channels.
-- **Resource Management**: Live tracking of medical, security, and infrastructure response units.
-- **Premium UI/UX**: Dark-themed, glassmorphism-heavy, enterprise-grade interface inspired by military and government command centers.
+</div>
 
 ---
 
-## 🏗️ Architecture
+## Executive Overview
 
-Trinetra AI is built on a modern full-stack monorepo architecture:
+Emergency response and public safety command centers handle immense volumes of telemetry, reports, and critical events during large-scale gatherings and city operations. Manual triage of these events introduces latency and human error.
 
-### Frontend
-- **Framework**: React 18 + Vite
-- **Styling**: Tailwind CSS + Custom Design System
-- **Routing**: React Router DOM
-- **Icons & Visuals**: Lucide React + Recharts
-- **Location**: `/frontend`
+**Trinetra AI** is an enterprise-grade, AI-driven emergency intelligence platform engineered to autonomously monitor, classify, and prioritize incidents in real-time. By leveraging advanced pattern recognition, predictive risk modeling, and a "Memory AI" correlation engine, Trinetra AI transforms raw telemetry into actionable deployment strategies. 
 
-### Backend (Coming Soon)
-- **Framework**: FastAPI (Python)
-- **Responsibilities**: AI Model Integration, API Routing, Data Processing
-- **Location**: `/backend`
+Designed for smart cities, large-scale events (such as the Mahakumbh), and national disaster management operations, the platform optimizes resource allocation and significantly reduces incident response times.
 
 ---
 
-## 🚀 Installation & Local Development
+## Architecture Diagram
 
-### Prerequisites
-- Node.js (v18+)
-- Python 3.10+ (For backend development)
+```mermaid
+graph TD
+    classDef user fill:#2C3E50,stroke:#34495E,stroke-width:2px,color:#fff;
+    classDef process fill:#2980B9,stroke:#2980B9,stroke-width:2px,color:#fff;
+    classDef ai fill:#8E44AD,stroke:#8E44AD,stroke-width:2px,color:#fff;
+    classDef core fill:#27AE60,stroke:#27AE60,stroke-width:2px,color:#fff;
+    
+    A[Citizen / Operator]:::user -->|Incident Report| B(AI Analysis Engine):::ai
+    B -->|Severity Detection| C{Risk Scoring}:::process
+    C -->|High Priority| D[Resource Allocation]:::core
+    C -->|Pattern Detected| E[Memory AI]:::ai
+    E --> F[Command Center Dashboard]:::process
+    D --> F
+    F --> G[Emergency Response Teams]:::user
+```
+
+---
+
+## Workflow Diagram
+
+```mermaid
+flowchart LR
+    classDef standard fill:#34495E,stroke:#2C3E50,stroke-width:2px,color:#fff;
+    classDef highlight fill:#E74C3C,stroke:#C0392B,stroke-width:2px,color:#fff;
+    
+    A[Incident]:::standard --> B[AI Classification]:::standard
+    B --> C[Priority Score]:::standard
+    C --> D[Resource Assignment]:::highlight
+    D --> E[Zone Monitoring]:::standard
+    E --> F[Resolution]:::standard
+    F --> G[Historical Learning]:::standard
+```
+
+---
+
+## Feature Showcase
+
+| Feature | Description |
+| :--- | :--- |
+| **AI Incident Reporting** | Natural language processing evaluates citizen reports, extracting core metadata, severity, and operational risk. |
+| **Emergency Memory AI** | Correlates live sensor data against historical incident databases to predict escalations before they occur. |
+| **Resource Management** | Autonomous dispatch logic that matches the nearest and most capable field units to critical incidents. |
+| **Zone Intelligence** | Geographic risk profiling mapping crowd density, active incidents, and infrastructural strain. |
+| **Risk Scoring** | Dynamic algorithms evaluate incoming threats and apply quantifiable priority scores for triage. |
+| **Telemetry Monitoring** | Continuous ingestion of live data across all active operational zones. |
+| **Lifecycle Management** | End-to-end incident tracking from initial report through dispatch, containment, and resolution. |
+| **Analytics Dashboard** | Real-time performance metrics, resource utilization rates, and operational overviews. |
+| **Decision Support System** | Executive-level strategic recommendations generated by machine learning models. |
+
+---
+
+## Platform Screenshots
+
+### Landing Page
+![Landing Page](screenshots/landing-page.png)
+
+### Mission Control Dashboard
+![Dashboard](screenshots/dashboard.png)
+
+### Incident Management
+![Incidents](screenshots/incidents.png)
+
+### Resource Command Center
+![Resources](screenshots/resources.png)
+
+### Emergency Memory AI
+![Memory AI](screenshots/memory-AI.png)
+
+### Analytics Dashboard
+![Analytics](screenshots/analytics.png)
+
+### Alerts Management
+![Alerts](screenshots/alerts.png)
+
+### Settings
+![Settings](screenshots/settings.png)
+
+---
+
+## Technology Stack
+
+### Frontend Architecture
+| Technology | Implementation Focus |
+| :--- | :--- |
+| **React** | Component-based UI rendering |
+| **TypeScript** | Static typing and interface enforcement |
+| **Vite** | Lightning-fast build tooling and HMR |
+| **Tailwind CSS** | Utility-first responsive design framework |
+| **Framer Motion** | High-performance fluid animations |
+
+### Backend Architecture
+| Technology | Implementation Focus |
+| :--- | :--- |
+| **FastAPI** | High-performance asynchronous API framework |
+| **Python** | Core server logic and AI integration |
+| **Uvicorn** | ASGI web server implementation |
+| **Pydantic** | Data validation and settings management |
+
+### Data & AI Layer
+| Technology | Implementation Focus |
+| :--- | :--- |
+| **Supabase** | PostgreSQL database and real-time syncing |
+| **Gemini AI** | Deep learning LLM for incident classification |
+
+### Deployment Infrastructure
+| Component | Provider |
+| :--- | :--- |
+| **Frontend Hosting** | Vercel |
+| **Backend Hosting** | Render |
+
+---
+
+## Database Architecture
+
+```mermaid
+erDiagram
+    INCIDENTS ||--o{ RESOURCES : requires
+    ZONES ||--o{ INCIDENTS : contains
+    INCIDENTS ||--o{ PATTERNS : generates
+    PATTERNS ||--o{ MEMORY_INSIGHTS : correlates
+    
+    INCIDENTS {
+        uuid id PK
+        string title
+        string status
+        string severity
+        string location
+        string category
+        integer priority_score
+    }
+    
+    RESOURCES {
+        uuid id PK
+        string name
+        string type
+        string status
+        string location
+        uuid assigned_incident_id FK
+    }
+    
+    ZONES {
+        uuid id PK
+        string name
+        string risk_level
+        integer risk_score
+        boolean model_used
+    }
+    
+    PATTERNS {
+        uuid id PK
+        string pattern_type
+        json signals
+    }
+    
+    MEMORY_INSIGHTS {
+        uuid id PK
+        string pattern_detected
+        json reasoning_trace
+        integer confidence
+    }
+```
+
+---
+
+## API Architecture
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/incidents` | Retrieve all active and historical incidents |
+| `POST` | `/api/incidents/create` | Register a new incident |
+| `POST` | `/api/incidents/analyze` | Process raw report text through Gemini AI |
+| `POST` | `/api/incidents/update_status` | Advance an incident through its lifecycle |
+| `GET` | `/api/resources` | Fetch all field units and operational statuses |
+| `GET` | `/api/zones` | Retrieve geographical risk assessments |
+| `GET` | `/api/patterns` | Fetch established historical threat patterns |
+| `GET` | `/api/memory-ai/insight` | Generate predictive insights via Memory AI |
+| `GET` | `/api/telemetry` | Stream live operational metrics |
+
+---
+
+## Project Structure
+
+```text
+trinetra-ai/
+├── backend/
+│   ├── api/
+│   ├── models/
+│   ├── routes/
+│   │   ├── alerts.py
+│   │   ├── api.py
+│   │   ├── incidents.py
+│   │   ├── memory_ai.py
+│   │   ├── resources.py
+│   │   └── zones.py
+│   ├── services/
+│   │   ├── ai_service.py
+│   │   ├── data_loader.py
+│   │   ├── memory_ai.py
+│   │   ├── risk_engine.py
+│   │   └── supabase_service.py
+│   ├── main.py
+│   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── data/
+│   │   ├── pages/
+│   │   ├── services/
+│   │   │   └── api.ts
+│   │   ├── App.tsx
+│   │   └── main.tsx
+│   ├── public/
+│   ├── package.json
+│   ├── tailwind.config.js
+│   └── vite.config.ts
+└── README.md
+```
+
+---
+
+## Installation Guide
+
+### Backend Setup
+
+1. Navigate to the backend directory:
+```bash
+cd backend
+```
+
+2. Create a virtual environment and activate it:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+```
+
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+4. Environment Variables:
+Create a `.env` file in the `backend` directory with the following keys:
+```env
+SUPABASE_URL=your_supabase_url
+SUPABASE_KEY=your_supabase_key
+GEMINI_API_KEY=your_gemini_api_key
+```
+
+5. Run the FastAPI server:
+```bash
+uvicorn main:app --reload --port 8000
+```
 
 ### Frontend Setup
 
-1. **Navigate to the frontend directory:**
-   ```bash
-   cd frontend
-   ```
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-3. **Run the development server:**
-   ```bash
-   npm run dev
-   ```
-   *The frontend will be available at `http://localhost:5173`.*
+1. Navigate to the frontend directory:
+```bash
+cd frontend
+```
 
-### Backend Setup (Placeholder)
+2. Install dependencies:
+```bash
+npm install
+```
 
-1. **Navigate to the backend directory:**
-   ```bash
-   cd backend
-   ```
-2. **Create a virtual environment and install dependencies:**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt
-   ```
-3. **Run the FastAPI server:**
-   ```bash
-   uvicorn main:app --reload
-   ```
+3. Environment Variables:
+Create a `.env` file in the `frontend` directory with the following keys:
+```env
+VITE_API_URL=http://localhost:8000
+```
+
+4. Start the development server:
+```bash
+npm run dev
+```
 
 ---
 
-## 🌍 Deployment Strategy
+## AI Intelligence Engine
 
-The project structure is natively prepared for decoupled deployment:
+Trinetra AI employs a multi-layered artificial intelligence approach to emergency management:
 
-- **Frontend**: Ready to be deployed via [Vercel](https://vercel.com). Just connect the repository and set the Root Directory to `frontend`.
-- **Backend**: Ready to be deployed via [Render](https://render.com) or AWS. Point the web service to the `backend/main.py` entry point.
-- **Database**: PostgreSQL integrations planned via [Supabase](https://supabase.com).
+* **Incident Classification**: Utilizes Large Language Models (LLMs) to ingest unstructured reporting data and extract structural taxonomies (e.g., Medical, Fire, Crowd Surge).
+* **Severity Analysis**: Contextualizes reporting vocabulary and infrastructural proximity to determine the immediate threat level.
+* **Risk Assessment**: Continuously evaluates geographic zones against live telemetry to score regional instability.
+* **Memory Correlation**: Cross-references incoming data against a persistent vector database of historical incidents to identify escalating threat signatures.
+* **Pattern Detection**: Monitors frequency graphs to identify distributed, non-obvious operational anomalies.
+* **Resource Recommendation**: Calculates the optimal unit dispatch based on proximity, capability, and current deployment status.
 
 ---
 
-## 🔮 Future Scope
+## Scalability & Real-World Applications
 
-- **Live WebSocket Feeds**: Transition from mock data to real-time socket connections for incidents and telemetry.
-- **Generative AI Integration**: Hook up the Emergency Memory AI to LLM providers (e.g., Gemini) for dynamic case-resolution generation.
-- **Auth & RBAC**: Implement multi-tier role-based access control (Operator, Commander, Admin) using Supabase Auth.
+Trinetra AI is engineered for high-throughput, high-stakes environments:
+
+* **Smart Cities**: Integration with municipal IoT grids for centralized urban oversight.
+* **Disaster Management**: Rapid deployment coordination during natural disasters.
+* **Police Operations**: Force multiplication through predictive threat deployment.
+* **Healthcare Emergencies**: Optimized routing for ambulance and medical triage teams.
+* **Crowd Control**: Predictive density management for high-capacity venues.
+* **Government Command Centers**: Unified operational intelligence for state and federal agencies.
+* **Public Events**: Dedicated telemetry monitoring for concerts, protests, and parades.
+* **Mahakumbh Scale Deployments**: Built specifically to handle the immense logistical and safety requirements of the world's largest human gatherings.
+
+---
+
+## Security & Reliability
+
+* **Input Validation**: Strict schema enforcement via Pydantic on all API endpoints.
+* **Secure APIs**: CORS middleware configuration and environment-isolated credentials.
+* **Fault Tolerance**: Fallback mechanisms utilizing local JSON indexing if the primary Supabase cluster experiences downtime.
+* **Monitoring**: Integrated telemetry tracking for API latency and error rates.
+* **Error Handling**: Graceful frontend degradation with localized error boundaries protecting core dashboard functionality.
+
+---
+
+## Future Roadmap
+
+* **Computer Vision**: Integration with live IP camera feeds for autonomous anomaly detection.
+* **CCTV Analytics**: Behavioral analysis algorithms for crowd panic and weapon detection.
+* **GIS Mapping**: Advanced geospatial layers detailing exact infrastructure routing and topology.
+* **Predictive Risk Forecasting**: Long-term machine learning models projecting threats hours in advance.
+* **Drone Surveillance**: API integrations for automated drone dispatch and aerial telemetry ingestion.
+* **Mobile Responder App**: Dedicated progressive web application for field units to update statuses natively.
+* **Multi-Language Support**: Complete localization of all intelligence interfaces and alerts.
+* **LLM-Based Command Assistant**: A conversational interface allowing commanders to query live databases using natural language.
+
+---
+
+## Why This Project Stands Out
+
+* **Full-Stack Engineering**: A complete, end-to-end operational platform combining a React/TypeScript frontend with a Python/FastAPI backend.
+* **Production Deployment**: fully deployed and accessible live via Vercel and Render cloud infrastructure.
+* **AI Integration**: Meaningful application of AI (Gemini) that directly solves real-world triage bottlenecks, rather than simple chatbot wrappers.
+* **Emergency Intelligence Domain**: Addresses a critical, high-impact public sector problem with a scalable technological solution.
+* **Scalable Architecture**: Built on modern, stateless principles allowing for horizontal scaling under extreme load.
+* **Real-Time Data Processing**: Asynchronous backend architecture specifically designed for low-latency operational environments.
+* **Modern Cloud Infrastructure**: Leveraging Supabase for robust PostgreSQL data persistence and real-time capabilities.
+
+---
+
+## Author
+
+**Somiya Namdeo**  
+*B.Tech CSE (AI & ML)*  
+*VIT Bhopal University*  
+
+A passionate software engineer focused on developing intelligent, high-impact systems that leverage modern cloud architecture and applied artificial intelligence to solve critical real-world problems.
+
+---
+<div align="center">
+<i>Engineered for the Future of Public Safety</i>
+</div>
