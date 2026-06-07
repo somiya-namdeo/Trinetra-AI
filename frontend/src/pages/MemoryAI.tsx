@@ -9,6 +9,7 @@ const MemoryAI = () => {
   const [resources, setResources] = useState<any[]>([]);
   
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   
   const [actionStates, setActionStates] = useState<Record<number, 'pending' | 'executing' | 'executed'>>({});
@@ -21,6 +22,7 @@ const MemoryAI = () => {
     if (showRefreshIndicator) setIsRefreshing(true);
     
     try {
+      setError(null);
       const [insightRes, incidentsRes, zonesRes, resourcesRes] = await Promise.all([
         getMemoryInsight(),
         getIncidents(),
@@ -32,8 +34,9 @@ const MemoryAI = () => {
       if (incidentsRes) setIncidents(Array.isArray(incidentsRes) ? incidentsRes : []);
       if (zonesRes) setZones(Array.isArray(zonesRes) ? zonesRes : []);
       if (resourcesRes) setResources(Array.isArray(resourcesRes) ? resourcesRes : []);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error fetching Memory AI data:", err);
+      setError(err.message || 'Server connection failed');
     } finally {
       if (showRefreshIndicator) setIsRefreshing(false);
       setLoading(false);
@@ -467,6 +470,20 @@ const MemoryAI = () => {
       </div>
 
       {/* TOP ROW: 4 METRICS */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-32 bg-card/50 border border-cardBorder rounded-lg">
+          <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
+          <h2 className="text-xl font-bold text-white mb-2">Analyzing Memory Matrix...</h2>
+          <p className="text-gray-400 text-sm">Correlating historical data with live sensors</p>
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center py-32 bg-critical/10 border border-critical/30 rounded-lg">
+          <ShieldAlert className="w-10 h-10 text-critical mb-4" />
+          <h2 className="text-xl font-bold text-critical mb-2">Intelligence Engine Disconnected</h2>
+          <p className="text-gray-400 text-sm">{error}</p>
+        </div>
+      ) : (
+      <>
       <div className="grid grid-cols-4 gap-4">
         {[
           { label: 'Historical Incidents Analyzed', value: '48,291', sub: `Live today: ${incidents.length}`, color: 'text-primary', border: 'border-primary/30', bg: 'bg-primary/5' },
@@ -715,6 +732,8 @@ const MemoryAI = () => {
         </div>
         
       </div>
+      </>
+      )}
     </div>
   );
 };

@@ -6,6 +6,8 @@ const Incidents = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [analysisData, setAnalysisData] = useState<any>(null);
@@ -16,16 +18,25 @@ const Incidents = () => {
   const [deployedResources, setDeployedResources] = useState<any[]>([]);
 
   const fetchIncidentsData = async () => {
-    const data = await getIncidents();
-    if (data && Array.isArray(data) && data.length > 0) {
-      const sorted = [...data].sort((a, b) => {
-        const timeA = new Date(a.created_at || a.timestamp || a.reported_at || 0).getTime();
-        const timeB = new Date(b.created_at || b.timestamp || b.reported_at || 0).getTime();
-        return timeB - timeA;
-      });
-      setLiveIncidents(sorted);
-      console.log(`[Lifecycle] Fetched and sorted ${sorted.length} incidents from backend.`);
-      return sorted;
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await getIncidents();
+      if (data && Array.isArray(data)) {
+        const sorted = [...data].sort((a, b) => {
+          const timeA = new Date(a.created_at || a.timestamp || a.reported_at || 0).getTime();
+          const timeB = new Date(b.created_at || b.timestamp || b.reported_at || 0).getTime();
+          return timeB - timeA;
+        });
+        setLiveIncidents(sorted);
+        console.log(`[Lifecycle] Fetched and sorted ${sorted.length} incidents from backend.`);
+        return sorted;
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch incidents', err);
+      setError(err.message || 'Failed to fetch incidents');
+    } finally {
+      setIsLoading(false);
     }
     return null;
   };
@@ -48,7 +59,16 @@ const Incidents = () => {
     setIsAnalyzing(true);
     setShowAnalysis(false);
     
-    const data = await analyzeIncident(report);
+    let data;
+    try {
+      data = await analyzeIncident(report);
+    } catch (err: any) {
+      setToastMessage('Analysis failed: ' + (err.message || 'Server error'));
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 4000);
+      setIsAnalyzing(false);
+      return;
+    }
     
     const newAnalysis = data || {
       category: "General Incident",
@@ -106,8 +126,18 @@ const Incidents = () => {
     };
     
     console.log(`[Lifecycle] Creating new incident`);
-    const response = await createIncident(newIncident);
-    console.log(`[Lifecycle] Incident persisted to backend.`, response);
+    let response;
+    try {
+      response = await createIncident(newIncident);
+      console.log(`[Lifecycle] Incident persisted to backend.`, response);
+    } catch (err: any) {
+      console.error('Failed to create incident', err);
+      setToastMessage('Failed to save incident: ' + (err.message || 'Server error'));
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 4000);
+      setIsAnalyzing(false);
+      return;
+    }
     
     const assignedId = response?.incident?.id;
     
@@ -460,18 +490,38 @@ const Incidents = () => {
           </div>
           
           <div className="p-4 space-y-3">
-            {liveIncidents.filter(i => (i.status || '').toUpperCase() !== 'RESOLVED').slice(0, 5).map((incident: any) => {
-              const isSelected = showAnalysis && selectedIncidentId === incident.id;
-              
-              const priority = incident.severity || incident.priority || 'LOW';
-              const status = incident.status || 'ACTIVE';
-              const timeStr = incident.created_at ? new Date(incident.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : (incident.timeAgo || 'Just now');
-              const displayId = incident.id || `INC-${Math.floor(Math.random() * 1000) + 2000}`;
-              
-              return (
-                <div 
-                  key={incident.id || Math.random()} 
-                  onClick={() => {
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-8">
+                <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
+                <p className="text-gray-400 text-sm">Loading incidents...</p>
+              </div>
+            ) : error ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center bg-critical/10 border border-critical/30 rounded-lg">
+                <ShieldAlert className="w-8 h-8 text-critical mb-2" />
+                <p className="text-critical text-sm font-bold mb-1">Connection Error</p>
+                <p className="text-gray-400 text-xs px-4">{error}</p>
+              </div>
+            ) : liveIncidents.filter(i => (i.status || '').toUpperCase() !== 'RESOLVED').length === 0 ? (
+              <div className="text-center py-6">
+                <div className="w-12 h-12 rounded-full bg-cardBorder mx-auto flex items-center justify-center mb-3">
+                  <CheckCircle2 className="text-gray-400" size={24} />
+                </div>
+                <h4 className="text-white font-bold mb-1">No Active Incidents</h4>
+                <p className="text-xs text-gray-400">All zones are currently secure.</p>
+              </div>
+            ) : (
+              liveIncidents.filter(i => (i.status || '').toUpperCase() !== 'RESOLVED').slice(0, 5).map((incident: any) => {
+                const isSelected = showAnalysis && selectedIncidentId === incident.id;
+                
+                const priority = incident.severity || incident.priority || 'LOW';
+                const status = incident.status || 'ACTIVE';
+                const timeStr = incident.created_at ? new Date(incident.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : (incident.timeAgo || 'Just now');
+                const displayId = incident.id || `INC-${Math.floor(Math.random() * 1000) + 2000}`;
+                
+                return (
+                  <div 
+                    key={incident.id || Math.random()} 
+                    onClick={() => {
                     setSelectedIncidentId(incident.id);
                     setShowAnalysis(true);
                     setAnalysisData(null); // Clear old analysis temporarily
@@ -509,7 +559,7 @@ const Incidents = () => {
                   </div>
                 </div>
               );
-            })}
+            }))}
           </div>
         </div>
       </div>

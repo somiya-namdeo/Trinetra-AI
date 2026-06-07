@@ -1,24 +1,35 @@
 import React, { useEffect, useState } from 'react';
-import { BrainCircuit, Zap } from 'lucide-react';
+import { BrainCircuit, Zap, Loader2, ShieldAlert } from 'lucide-react';
 import { aiPredictions } from '../../data/predictions';
 import { getMemoryInsight } from '../../services/api';
 
 const AIInsights = () => {
   const [predictions, setPredictions] = useState<any[]>(aiPredictions);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchInsight = async () => {
-      const data = await getMemoryInsight();
-      if (data && data.pattern_detected) {
-        setPredictions([{
-          id: 'backend-insight',
-          title: data.pattern_detected,
-          description: data.reasoning_trace?.[0] || 'Correlated live metrics point to escalation.',
-          severity: 'HIGH',
-          eta: data.predicted_escalation || '8-12m',
-          confidence: data.confidence || 87,
-          recommendations: data.preventive_actions || ['Deploy additional resources']
-        }, ...aiPredictions.slice(1)]); // replace first one with real backend data
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await getMemoryInsight();
+        if (data && data.pattern_detected) {
+          setPredictions([{
+            id: 'backend-insight',
+            title: data.pattern_detected,
+            description: data.reasoning_trace?.[0] || 'Correlated live metrics point to escalation.',
+            severity: 'HIGH',
+            eta: data.predicted_escalation || '8-12m',
+            confidence: data.confidence || 87,
+            recommendations: data.preventive_actions || ['Deploy additional resources']
+          }, ...aiPredictions.slice(1)]); // replace first one with real backend data
+        }
+      } catch (err: any) {
+        console.error('Failed to fetch AI Insights', err);
+        setError(err.message || 'Failed to fetch AI Insights');
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchInsight();
@@ -39,7 +50,18 @@ const AIInsights = () => {
       </div>
       
       <div className="p-4 space-y-4 flex-1 overflow-y-auto min-h-0">
-        {predictions.map((pred) => (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-10">
+            <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
+            <p className="text-gray-400 text-sm">Loading AI Insights...</p>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-10 bg-critical/10 border border-critical/30 rounded-lg">
+            <ShieldAlert className="w-8 h-8 text-critical mb-2" />
+            <p className="text-critical text-sm font-bold mb-1">AI Engine Disconnected</p>
+            <p className="text-gray-400 text-xs px-4 text-center">{error}</p>
+          </div>
+        ) : predictions.map((pred) => (
           <div key={pred.id} className="bg-card border border-cardBorder rounded-lg p-4">
             <div className="flex gap-3 mb-3">
               <div className="mt-1 text-primary">

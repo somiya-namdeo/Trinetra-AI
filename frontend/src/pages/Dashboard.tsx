@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { ShieldAlert, Loader2 } from 'lucide-react';
 import StatsCards from '../components/dashboard/StatsCards';
 import MissionMap from '../components/dashboard/MissionMap';
 import IncidentFeed from '../components/dashboard/IncidentFeed';
@@ -29,9 +30,15 @@ const Dashboard = () => {
     enRouteResources: '2'
   });
 
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchData = async () => {
-      const [incidents, zones, resources, insight] = await Promise.all([
+      try {
+        setIsLoading(true);
+        setError(null);
+        const [incidents, zones, resources, insight] = await Promise.all([
         getIncidents(),
         getZones(),
         getResources(),
@@ -80,6 +87,7 @@ const Dashboard = () => {
         }
 
         return {
+          ...prev,
           activeIncidents: activeCount,
           criticalZones: critZoneCount,
           availableResources: availCount,
@@ -93,9 +101,16 @@ const Dashboard = () => {
           enRouteResources: enRouteCount
         };
       });
+      } catch (err: any) {
+        console.error('Failed to fetch dashboard data', err);
+        setError(err.message || 'Server error');
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchData();
   }, []);
+
   return (
     <div className="space-y-6 pb-10">
       {/* Header */}
@@ -107,61 +122,76 @@ const Dashboard = () => {
       {/* KPI Cards */}
       <StatsCards data={statsData} />
 
-      {/* Mission Ops Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        <div className="lg:col-span-9">
-          <MissionMap activeIncidents={statsData.activeIncidents} enRouteResources={statsData.enRouteResources} />
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-20 bg-card/50 border border-cardBorder rounded-lg col-span-full">
+          <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
+          <p className="text-gray-400 text-sm">Initializing Command Center...</p>
         </div>
-        <div className="lg:col-span-3">
-          <SystemStatus />
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center py-20 bg-critical/10 border border-critical/30 rounded-lg col-span-full">
+          <ShieldAlert className="w-10 h-10 text-critical mb-3" />
+          <p className="text-critical font-bold mb-1 text-lg">System Initialization Failed</p>
+          <p className="text-gray-400 text-sm">{error}</p>
         </div>
-      </div>
-
-      {/* Intelligence Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
-        <div className="lg:col-span-6 h-[450px]">
-          <IncidentFeed incidents={dashboardIncidents} />
-        </div>
-        <div className="lg:col-span-6 flex flex-col h-[450px]">
-          <AIInsights />
-        </div>
-      </div>
-
-      {/* Quick Actions - Full Width */}
-      <div className="mt-6">
-        <QuickActions />
-      </div>
-
-      {/* Advanced Analytics - Full Width */}
-      <div className="border-t border-cardBorder pt-6">
-        <h2 className="text-lg font-bold text-white mb-6 text-gradient">Advanced Analytics & Response Panel</h2>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch mb-8">
-            {/* Row 1: 3 + 3 + 6 */}
-            <div className="lg:col-span-3">
-              <ResourceStatus />
+      ) : (
+        <>
+          {/* Mission Ops Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div className="lg:col-span-9">
+              <MissionMap activeIncidents={statsData.activeIncidents} enRouteResources={statsData.enRouteResources} />
             </div>
             <div className="lg:col-span-3">
-              <SectorSummary />
-            </div>
-            <div className="lg:col-span-6">
-              <RecentAIDecisions />
+              <SystemStatus />
             </div>
           </div>
-            
-          {/* Row 2: 4 + 4 + 4 */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-            <div className="lg:col-span-4">
-              <HistoricalCases />
+
+          {/* Intelligence Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
+            <div className="lg:col-span-6 h-[450px]">
+              <IncidentFeed incidents={dashboardIncidents} />
             </div>
-            <div className="lg:col-span-4">
-              <EmergencyBroadcast />
+            <div className="lg:col-span-6 flex flex-col h-[450px]">
+              <AIInsights />
             </div>
-            <div className="lg:col-span-4">
-              <ImpactAnalysis />
+          </div>
+
+          {/* Quick Actions - Full Width */}
+          <div className="mt-6">
+            <QuickActions />
+          </div>
+
+          {/* Advanced Analytics - Full Width */}
+          <div className="border-t border-cardBorder pt-6">
+            <h2 className="text-lg font-bold text-white mb-6 text-gradient">Advanced Analytics & Response Panel</h2>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch mb-8">
+                {/* Row 1: 3 + 3 + 6 */}
+                <div className="lg:col-span-3">
+                  <ResourceStatus />
+                </div>
+                <div className="lg:col-span-3">
+                  <SectorSummary />
+                </div>
+                <div className="lg:col-span-6">
+                  <RecentAIDecisions />
+                </div>
+              </div>
+                
+              {/* Row 2: 4 + 4 + 4 */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                <div className="lg:col-span-4">
+                  <HistoricalCases />
+                </div>
+                <div className="lg:col-span-4">
+                  <EmergencyBroadcast />
+                </div>
+                <div className="lg:col-span-4">
+                  <ImpactAnalysis />
+                </div>
             </div>
-        </div>
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
