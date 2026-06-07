@@ -1,20 +1,20 @@
 [
     {
-        "title": "Elderly person collapsed near Gate 7",
-        "severity": "Critical",
+        "title": "No water at gate 4",
+        "severity": "High",
         "status": "ACTIVE",
-        "location": "Gate 7",
-        "category": "Medical Emergency",
-        "created_at": "2026-06-07T11:28:01.401Z",
-        "priority_score": 100,
+        "location": "Gate 4",
+        "category": "Water Supply Failure",
+        "created_at": "2026-06-07T11:44:03.764Z",
+        "priority_score": 82,
         "recommended_resources": [
-            "Ambulance",
-            "Medical Team",
+            "Water Supply Unit",
+            "Volunteer Team",
             "Security Unit"
         ],
-        "recommended_action": "Clear a 4m radius around the victim immediately and dispatch nearest medical unit.",
-        "estimated_response_time": "4 minutes",
-        "id": 60
+        "recommended_action": "Deploy backup water supply, guide crowd to nearest hydration point, and monitor heat-related symptoms.",
+        "estimated_response_time": "6 minutes",
+        "id": 61
     },
     {
         "id": 1,
@@ -1150,6 +1150,25 @@
         "recommended_resources": null,
         "recommended_action": null,
         "created_at": "2026-06-07T11:28:01.538673+00:00",
+        "incident_id": null,
+        "resources_assigned_at": null,
+        "in_progress_at": null,
+        "contained_at": null,
+        "resolved_at": null
+    },
+    {
+        "id": 61,
+        "title": "No water at gate 4",
+        "description": "Generated via Report",
+        "category": "Water Supply Failure",
+        "location": "Gate 4",
+        "zone": null,
+        "severity": "High",
+        "priority_score": null,
+        "status": "ACTIVE",
+        "recommended_resources": null,
+        "recommended_action": null,
+        "created_at": "2026-06-07T11:44:03.978097+00:00",
         "incident_id": null,
         "resources_assigned_at": null,
         "in_progress_at": null,

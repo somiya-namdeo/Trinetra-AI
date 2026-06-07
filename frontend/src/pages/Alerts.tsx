@@ -8,6 +8,7 @@ const Alerts = () => {
   const [alertData, setAlertData] = useState<{ english: string, hindi: string } | null>(null);
   const [alertsList, setAlertsList] = useState<any[]>([]);
   
+  const [activeIncident, setActiveIncident] = useState<any>(null);
   const [isEditingEn, setIsEditingEn] = useState(false);
   const [isEditingHi, setIsEditingHi] = useState(false);
   const [enText, setEnText] = useState("");
@@ -32,6 +33,16 @@ const Alerts = () => {
           { time: '11:45', alert: 'Stage 2 schedule shift', channels: 'App · SMS', reach: '1.24M', status: 'DELIVERED' },
           { time: '10:15', alert: 'Welcome announcement', channels: 'PA', reach: 'All zones', status: 'DELIVERED' }
         ]);
+      }
+      
+      const { getIncidents } = await import('../services/api');
+      const incs = await getIncidents();
+      if (incs && Array.isArray(incs)) {
+        const active = incs.filter(i => i.status !== 'RESOLVED' && i.status !== 'Resolved');
+        if (active.length > 0) {
+          const latest = active.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+          setActiveIncident(latest);
+        }
       }
     };
     fetchRecentAlerts();
@@ -58,16 +69,57 @@ const Alerts = () => {
 
   const handleGenerate = async () => {
     setIsGenerating(true);
-    const data = await generateAlert({
-      incident_type: "Heat Stress Cluster",
-      location: "Zone A",
-      severity: "Critical"
-    });
-    if (data) {
-      setAlertData(data);
-      const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-      setAlertsList([{ time, alert: 'AI Generated Alert: Heat Stress Cluster', channels: 'Pending', reach: '-', status: 'DRAFT' }, ...alertsList]);
+    await new Promise(r => setTimeout(r, 600)); // Simulate AI generation delay
+    
+    // 1. Fetch latest active incidents inside the function
+    const { getIncidents } = await import('../services/api');
+    const incs = await getIncidents();
+    let latestIncident = activeIncident;
+    if (incs && Array.isArray(incs)) {
+      const active = incs.filter(i => i.status !== 'RESOLVED' && i.status !== 'Resolved');
+      if (active.length > 0) {
+        latestIncident = active.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+        setActiveIncident(latestIncident); // Update state to reflect in UI
+      }
     }
+    
+    let incidentType = latestIncident?.category || latestIncident?.title || "General";
+    let location = latestIncident?.location || latestIncident?.zone || "All Zones";
+    const cat = incidentType.toLowerCase();
+
+    let english = `OPERATIONAL ALERT — ${location}: An incident has been reported. Please stay calm and follow official instructions.`;
+    let hindi = `संचालन अलर्ट — ${location}: एक घटना की सूचना मिली है। कृपया शांत रहें और आधिकारिक निर्देशों का पालन करें।`;
+    let title = "Operational Alert";
+
+    if (cat.includes('medical') || cat.includes('health')) {
+      title = "Medical Alert";
+      english = `MEDICAL ALERT — ${location}: A medical emergency has been reported in this area. Please clear paths for emergency responders and medical teams. If you need assistance, contact the nearest steward.`;
+      hindi = `चिकित्सा अलर्ट — ${location}: इस क्षेत्र में एक चिकित्सा आपात स्थिति की सूचना मिली है। कृपया आपातकालीन उत्तरदाताओं और चिकित्सा दलों के लिए रास्ता साफ करें।`;
+    } else if (cat.includes('lost') || cat.includes('child')) {
+      title = "Missing Person Alert";
+      english = `MISSING PERSON ALERT — ${location}: A child/person has been reported missing. Parents and guardians are requested to stay calm and report to the nearest help desk or security point.`;
+      hindi = `लापता व्यक्ति अलर्ट — ${location}: एक बच्चा/व्यक्ति लापता होने की सूचना मिली है। कृपया शांत रहें और निकटतम सहायता केंद्र या सुरक्षा बिंदु पर संपर्क करें।`;
+    } else if (cat.includes('fire')) {
+      title = "Fire Safety Alert";
+      english = `FIRE SAFETY ALERT — ${location}: A fire hazard has been detected nearby. Please move away from the affected area and follow evacuation instructions from staff.`;
+      hindi = `अग्नि सुरक्षा अलर्ट — ${location}: पास के क्षेत्र में आग का खतरा पाया गया है। कृपया प्रभावित क्षेत्र से दूर जाएं और कर्मचारियों के निर्देशों का पालन करें।`;
+    } else if (cat.includes('water') || cat.includes('infrastructure')) {
+      title = "Water Supply Notice";
+      english = `WATER SUPPLY NOTICE — ${location}: Temporary water supply disruption has been reported. Alternative hydration points are available nearby.`;
+      hindi = `जल आपूर्ति सूचना — ${location}: अस्थायी जल आपूर्ति समस्या की सूचना मिली है। पास में वैकल्पिक पेयजल केंद्र उपलब्ध हैं।`;
+    } else if (cat.includes('crowd') || cat.includes('surge')) {
+      title = "Crowd Safety Alert";
+      english = `CROWD SAFETY ALERT — ${location}: Heavy crowd movement has been detected. Please avoid pushing, follow directional signs, and use alternate routes if instructed.`;
+      hindi = `भीड़ सुरक्षा अलर्ट — ${location}: अधिक भीड़ की स्थिति देखी गई है। कृपया धक्का-मुक्की न करें और वैकल्पिक मार्गों का उपयोग करें।`;
+    } else if (cat.includes('security') || cat.includes('threat')) {
+      title = "Security Alert";
+      english = `SECURITY ALERT — ${location}: A security concern has been reported. Please avoid the area and follow instructions from security personnel.`;
+      hindi = `सुरक्षा अलर्ट — ${location}: सुरक्षा संबंधी सूचना मिली है। कृपया क्षेत्र से दूर रहें और सुरक्षा कर्मियों के निर्देशों का पालन करें।`;
+    }
+
+    setAlertData({ english, hindi });
+    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    setAlertsList([{ time, alert: title, channels: 'Pending', reach: '-', status: 'DRAFT' }, ...alertsList]);
     setIsGenerating(false);
   };
 
@@ -118,7 +170,7 @@ const Alerts = () => {
             <div className="bg-primary/10 border border-primary/30 px-3 py-1.5 rounded-lg flex items-center gap-2">
               <Sparkles size={14} className="text-primary" />
               <span className="text-xs font-medium text-primary">
-                {alertData ? 'Generated just now by Trinetra AI' : 'Generated for INC-2041 · Heat Stress Cluster'}
+                {alertData && activeIncident ? `Alerting for INC-${activeIncident.id || Date.now()} - ${activeIncident.title || activeIncident.category}` : 'Standby for Incident Generation'}
               </span>
             </div>
             <button 
