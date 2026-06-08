@@ -231,49 +231,6 @@ flowchart LR
 
 ```mermaid
 erDiagram
-
-    ZONES ||--o{ INCIDENTS : contains
-    INCIDENTS ||--o{ RESOURCES : requires
-    INCIDENTS ||--o{ PATTERNS : generates
-    PATTERNS ||--o{ MEMORY_INSIGHTS : correlates
-
-    ZONES {
-        string name
-        string risk_level
-        int risk_score
-    }
-
-    INCIDENTS {
-        string title
-        string status
-        string severity
-        int priority_score
-    }
-
-    RESOURCES {
-        string name
-        string type
-        string status
-    }
-
-    PATTERNS {
-        string pattern_type
-        string signals
-    }
-
-    MEMORY_INSIGHTS {
-        string pattern_detected
-        int confidence
-    }
-```
-
-
----
-
-## Database Architecture
-
-```mermaid
-erDiagram
     ZONES ||--o{ INCIDENTS : contains
     INCIDENTS ||--o{ RESOURCES : requires
     INCIDENTS ||--o{ PATTERNS : generates
